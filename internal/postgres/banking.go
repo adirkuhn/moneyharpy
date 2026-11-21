@@ -12,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/adirkuhn/moneyharpy/internal/banking"
+	"github.com/adirkuhn/moneyharpy/internal/journal"
 	"github.com/adirkuhn/moneyharpy/internal/postgres/sqlc"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 )
@@ -360,6 +361,27 @@ func (s *BankingStore) MutationVersions(ctx context.Context, admin resource.ID) 
 }
 
 // SaveBookings implements banking.Store.
+// AttachPayment implements banking.Store.
+func (s *BankingStore) AttachPayment(ctx context.Context, admin, mutation resource.ID, invoiceType string, invoice resource.ID, price banking.Amount) (bool, error) {
+	found := false
+	err := pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
+		q := s.q.WithTx(tx)
+		id, err := q.AttachImportedPayment(ctx, sqlc.AttachImportedPaymentParams{
+			FinancialMutationID: int64(mutation), AdministrationID: int64(admin), InvoiceType: invoiceType, InvoiceID: int64(invoice), Price: int64(price),
+		})
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		found = true
+		// The transaction books the payment now; what it booked on its own goes.
+		return q.DeleteJournalEntriesOf(ctx, sqlc.DeleteJournalEntriesOfParams{AdministrationID: int64(admin), DocumentType: journal.Payment, DocumentID: id})
+	})
+	return found, err
+}
+
 func (s *BankingStore) SaveBookings(ctx context.Context, m banking.Mutation, added []banking.Booking, removed []resource.ID) error {
 	return pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
 		q := s.q.WithTx(tx)

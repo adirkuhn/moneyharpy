@@ -132,6 +132,42 @@ func (q *Queries) AdministrationForUser(ctx context.Context, arg AdministrationF
 	return i, err
 }
 
+const attachImportedPayment = `-- name: AttachImportedPayment :one
+UPDATE payments p
+SET financial_mutation_id = m.id, financial_account_id = m.financial_account_id, ledger_account_id = NULL, updated_at = now()
+FROM financial_mutations m
+WHERE m.id = $1 AND m.administration_id = $2
+  AND p.id = (SELECT q.id FROM payments q
+              WHERE q.administration_id = $2 AND q.invoice_type = $3 AND q.invoice_id = $4
+                AND q.price = $5 AND q.financial_mutation_id IS NULL
+              ORDER BY abs(q.payment_date - m.date), q.id
+              LIMIT 1)
+RETURNING p.id
+`
+
+type AttachImportedPaymentParams struct {
+	FinancialMutationID int64
+	AdministrationID    int64
+	InvoiceType         string
+	InvoiceID           int64
+	Price               int64
+}
+
+// Links the payment of the invoice of that price which no transaction paid
+// yet, the one dated nearest the transaction, to the transaction.
+func (q *Queries) AttachImportedPayment(ctx context.Context, arg AttachImportedPaymentParams) (int64, error) {
+	row := q.db.QueryRow(ctx, attachImportedPayment,
+		arg.FinancialMutationID,
+		arg.AdministrationID,
+		arg.InvoiceType,
+		arg.InvoiceID,
+		arg.Price,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const attachmentsOf = `-- name: AttachmentsOf :many
 SELECT id, administration_id, entity_type, entity_id, filename, content_type, size, created_at, updated_at, sha256 FROM attachments
 WHERE administration_id = $1 AND entity_type = $2 AND entity_id = ANY($3::bigint[])

@@ -135,6 +135,37 @@ func (s *Service) ImportStatement(ctx context.Context, admin, user resource.ID, 
 	return added, wrapErr("store statement", err)
 }
 
+// LinkImportedPayment links a payment brought in on its invoice to the
+// transaction that made it in the source, when the invoice came in before
+// the transaction did. Like the rest of an import it takes the books as the
+// source has them, the locked period too. It reports whether it linked one;
+// ErrBookingNotFound says the invoice has no such payment here.
+func (s *Service) LinkImportedPayment(ctx context.Context, admin, user, mutation resource.ID, invoiceType string, invoice resource.ID, price Amount) (bool, error) {
+	if _, err := s.ensure(ctx, admin, user); err != nil {
+		return false, err
+	}
+	m, err := s.store.Mutation(ctx, admin, mutation)
+	if err != nil {
+		return false, err
+	}
+	if slices.ContainsFunc(m.Payments, func(p PaymentLink) bool {
+		return p.InvoiceType == invoiceType && p.InvoiceID == invoice && p.Price == price
+	}) {
+		return false, nil
+	}
+	found, err := s.store.AttachPayment(ctx, admin, mutation, invoiceType, invoice, price)
+	if err != nil {
+		return false, fmt.Errorf("link payment: %w", err)
+	}
+	if !found {
+		return false, ErrBookingNotFound
+	}
+	if _, err := s.resettle(ctx, admin, mutation); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 func invalidField(field, problem string) error {
 	var verr resource.ValidationError
 	verr.Add(field, problem)

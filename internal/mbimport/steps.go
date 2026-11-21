@@ -52,6 +52,7 @@ type Targets struct {
 		ImportAccount(ctx context.Context, admin, user resource.ID, in banking.ImportedAccount) (banking.Account, error)
 		ImportStatement(ctx context.Context, admin, user resource.ID, in banking.ImportedStatement) ([]banking.Mutation, error)
 		LinkBooking(ctx context.Context, admin, id, user resource.ID, l banking.Link) (banking.Mutation, error)
+		LinkImportedPayment(ctx context.Context, admin, user, mutation resource.ID, invoiceType string, invoice resource.ID, price banking.Amount) (bool, error)
 	}
 	Sales interface {
 		ImportInvoice(ctx context.Context, admin, user resource.ID, in sales.ImportedInvoice) (sales.Invoice, error)
@@ -64,6 +65,7 @@ type Targets struct {
 	}
 	Purchases interface {
 		Import(ctx context.Context, admin, user resource.ID, in purchases.ImportedDocument) (purchases.Document, error)
+		ImportedNew(ctx context.Context, admin, user resource.ID, kind string, id resource.ID) (bool, error)
 		ImportTypeless(ctx context.Context, admin, user resource.ID, o resource.Origin, c purchases.TypelessChanges) (purchases.Typeless, error)
 		ImportGeneral(ctx context.Context, admin, user resource.ID, o resource.Origin, entryNumber int, c purchases.GeneralChanges) (purchases.General, error)
 		AddAttachment(ctx context.Context, admin, user resource.ID, kind string, id resource.ID, filename, contentType string, data []byte) (attachments.Attachment, error)
@@ -112,6 +114,9 @@ type run struct {
 	mending *mending
 	// partialNotes are, per kind, the parts records came in without.
 	partialNotes map[string]map[resource.ID][]string
+	// revisit, per kind, checks a record that came in before against how
+	// Moneybird has it now; such records are fetched again.
+	revisit map[string]func(ctx context.Context, raw json.RawMessage) error
 }
 
 func (r *run) step(ctx context.Context, kind string) error {
@@ -146,6 +151,8 @@ func (r *run) step(ctx context.Context, kind string) error {
 		return r.purchases(ctx, StepPurchaseInvoices, "documents/purchase_invoices", purchases.PurchaseInvoice)
 	case StepReceipts:
 		return r.purchases(ctx, StepReceipts, "documents/receipts", purchases.Receipt)
+	case StepPaymentLinks:
+		return r.paymentLinks(ctx)
 	case StepGeneralDocuments:
 		return r.generalDocuments(ctx)
 	case StepTypelessDocuments:
@@ -371,7 +378,7 @@ func (r *run) synced(ctx context.Context, step, path, kind string, query url.Val
 		if err != nil {
 			return err
 		}
-		if done && len(notes[id]) == 0 {
+		if done && len(notes[id]) == 0 && r.revisit[kind] == nil {
 			st.found(at, r.job.StartedAt)
 			continue
 		}
@@ -432,6 +439,11 @@ func (r *run) take(ctx context.Context, st *Step, kind string, raws []json.RawMe
 			}
 			if n := notes[head.ID.id()]; len(n) > 0 {
 				if err := r.mend(ctx, kind, head.ID.id(), raw, n, one); err != nil {
+					return err
+				}
+			}
+			if again := r.revisit[kind]; again != nil {
+				if err := again(ctx, raw); err != nil {
 					return err
 				}
 			}

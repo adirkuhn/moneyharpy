@@ -71,6 +71,10 @@ type Settings struct {
 // Store persists banking data. Methods taking an administration trust the
 // caller to have checked access.
 type Store interface {
+	// AttachPayment links a payment of the invoice of that price, which no
+	// transaction paid yet, to the transaction, taking back what it booked
+	// on its own; it reports whether there was one.
+	AttachPayment(ctx context.Context, admin, mutation resource.ID, invoiceType string, invoice resource.ID, price Amount) (bool, error)
 	Settings(ctx context.Context, admin resource.ID) (Settings, error)
 	SetAutoLink(ctx context.Context, admin resource.ID, on bool) error
 	// Seed marks the administration seeded and stores its first accounts,

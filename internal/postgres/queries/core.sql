@@ -1215,3 +1215,17 @@ SELECT 'tax_rate'::text AS what, tax_rate_id::bigint AS id, count(*)::bigint AS 
 UNION ALL
 SELECT 'ledger_account'::text, ledger_account_id::bigint, count(*)::bigint FROM lines WHERE ledger_account_id IS NOT NULL GROUP BY ledger_account_id
 ORDER BY what, uses DESC, id;
+
+-- name: AttachImportedPayment :one
+-- Links the payment of the invoice of that price which no transaction paid
+-- yet, the one dated nearest the transaction, to the transaction.
+UPDATE payments p
+SET financial_mutation_id = m.id, financial_account_id = m.financial_account_id, ledger_account_id = NULL, updated_at = now()
+FROM financial_mutations m
+WHERE m.id = @financial_mutation_id AND m.administration_id = @administration_id
+  AND p.id = (SELECT q.id FROM payments q
+              WHERE q.administration_id = @administration_id AND q.invoice_type = @invoice_type AND q.invoice_id = @invoice_id
+                AND q.price = @price AND q.financial_mutation_id IS NULL
+              ORDER BY abs(q.payment_date - m.date), q.id
+              LIMIT 1)
+RETURNING p.id;

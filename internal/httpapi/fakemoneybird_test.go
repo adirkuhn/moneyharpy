@@ -30,6 +30,8 @@ func newFakeMoneybird(t *testing.T) *httptest.Server {
 			"504000000000000302": `{"id":"504000000000000302","financial_account_id":"504000000000000201","financial_statement_id":"504000000000000401","date":"2026-01-20","message":"Rent","amount":"-50.0",
 				"ledger_account_bookings":[{"id":"504000000000000312","ledger_account_id":"504000000000000904","description":"Rent January","price":"-50.0"}]}`,
 			"504000000000000303": `{"id":"504000000000000303","financial_account_id":"504000000000000201","financial_statement_id":"504000000000000402","date":"2026-02-10","message":"PUR-77","amount":"-121.0"}`,
+			"504000000000000304": `{"id":"504000000000000304","financial_account_id":"504000000000000201","financial_statement_id":"504000000000000402","date":"2026-02-20","message":"PUR-78","amount":"-24.2",
+				"payments":[{"id":"504000000000000168","invoice_type":"Document","invoice_id":"504000000000000165","price":"24.2","financial_mutation_id":"504000000000000304"}]}`,
 		},
 		"sales_invoices": {
 			"504000000000000111": `{"id":"504000000000000111","contact_id":"504000000000000501","invoice_id":"2026-0001","state":"paid","original_estimate_id":"504000000000000141","workflow_id":"504000000000000581",
@@ -51,6 +53,13 @@ func newFakeMoneybird(t *testing.T) *httptest.Server {
 				"details":[{"id":"504000000000000162","description":"Paper","amount":"1","price":"100","tax_rate_id":"504000000000000912","ledger_account_id":"504000000000000904"}],
 				"payments":[{"id":"504000000000000163","payment_date":"2026-02-10","price":"121.0","price_base":"121.0","financial_account_id":"504000000000000201","financial_mutation_id":"504000000000000303"}],
 				"attachments":[{"id":"504000000000000164","filename":"email.eml","content_type":"message/rfc822"}]}`,
+			// Paid by a transaction, which Moneybird names on the transaction only, as when the invoice came in first.
+			"504000000000000165": `{"id":"504000000000000165","contact_id":"504000000000000501","reference":"PUR-78","date":"2026-02-15","due_date":"2026-03-01","entry_number":7,"currency":"EUR","prices_are_incl_tax":false,"state":"paid",
+				"details":[{"id":"504000000000000167","description":"Ink","amount":"1","price":"20","tax_rate_id":"504000000000000912","ledger_account_id":"504000000000000904"}],
+				"payments":[{"id":"504000000000000168","payment_date":"2026-02-20","price":"24.2","price_base":"24.2"}],"attachments":[]}`,
+			// Not processed in Moneybird yet: it books nothing.
+			"504000000000000166": `{"id":"504000000000000166","contact_id":"504000000000000501","reference":"PUR-79","date":"2026-02-16","currency":"EUR","prices_are_incl_tax":false,"state":"new",
+				"details":[{"id":"504000000000000169","description":"Toner","amount":"1","price":"50","tax_rate_id":"504000000000000912","ledger_account_id":"504000000000000904"}],"payments":[],"attachments":[]}`,
 		},
 		"documents/receipts": {},
 		"documents/general_documents": {
