@@ -114,19 +114,17 @@ type Step struct {
 	Done     bool `json:"done"`
 	// Problems say why records failed, such as "contact 123: email is invalid".
 	Problems []string `json:"problems"`
-	// carried is what the step imported before it stopped and started
-	// again: those records it now finds here are not skipped.
-	carried int
 }
 
-// skip counts a record that is here already, unless this import brought
-// it in before it started the step again.
-func (s *Step) skip() {
-	if s.carried > 0 {
-		s.carried--
+// found counts a record that is here already: imported when this import
+// brought it in, before it stopped and started the step again; skipped when
+// it was here before the import.
+func (s *Step) found(at, started time.Time) {
+	if at.Before(started) {
+		s.Skipped++
 		return
 	}
-	s.Skipped++
+	s.Imported++
 }
 
 // note keeps what went wrong with part of a record, such as one of its
@@ -233,7 +231,10 @@ type Store interface {
 	LeaseDueJobs(ctx context.Context, now, lease time.Time, max int) ([]Job, error)
 	// Imported returns the id here of a record imported before.
 	Imported(ctx context.Context, admin resource.ID, kind string, source resource.ID) (resource.ID, bool, error)
-	RecordImported(ctx context.Context, admin resource.ID, kind string, source, target resource.ID) error
+	// RecordImported remembers where a record went, and when it came in.
+	RecordImported(ctx context.Context, admin resource.ID, kind string, source, target resource.ID, at time.Time) error
+	// ImportedAt tells when a record came in, if it did.
+	ImportedAt(ctx context.Context, admin resource.ID, kind string, source resource.ID) (time.Time, bool, error)
 	// Empty reports whether the administration has none of the data an
 	// import brings: no contacts, documents, transactions and the like.
 	Empty(ctx context.Context, admin resource.ID) (bool, error)

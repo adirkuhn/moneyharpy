@@ -72,7 +72,7 @@ func (r *run) financialAccounts(ctx context.Context) error {
 		}
 		// A cash account that took the place of ours keeps our id.
 		if acc.ID != a.ID.id() {
-			if err := r.s.store.RecordImported(ctx, r.job.AdministrationID, kindFinancialAccount, a.ID.id(), acc.ID); err != nil {
+			if err := r.s.store.RecordImported(ctx, r.job.AdministrationID, kindFinancialAccount, a.ID.id(), acc.ID, r.s.now()); err != nil {
 				return 0, err
 			}
 		}
@@ -99,10 +99,10 @@ func (r *run) financialMutations(ctx context.Context) error {
 			}
 			continue
 		}
-		if _, done, err := r.s.store.Imported(ctx, r.job.AdministrationID, kindFinancialMutation, id); err != nil {
+		if at, done, err := r.s.store.ImportedAt(ctx, r.job.AdministrationID, kindFinancialMutation, id); err != nil {
 			return err
 		} else if done {
-			st.skip()
+			st.found(at, r.job.StartedAt)
 			continue
 		}
 		todo = append(todo, v.ID)
@@ -168,7 +168,7 @@ func (r *run) financialMutations(ctx context.Context) error {
 			if err := r.bookOnCategories(ctx, st, m); err != nil {
 				return err
 			}
-			if err := r.s.store.RecordImported(ctx, r.job.AdministrationID, kindFinancialMutation, m.ID.id(), m.ID.id()); err != nil {
+			if err := r.s.store.RecordImported(ctx, r.job.AdministrationID, kindFinancialMutation, m.ID.id(), m.ID.id(), r.s.now()); err != nil {
 				return err
 			}
 			st.Imported++

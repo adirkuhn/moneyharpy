@@ -98,10 +98,22 @@ func (s *MoneybirdImportStore) Imported(ctx context.Context, admin resource.ID, 
 }
 
 // RecordImported implements mbimport.Store.
-func (s *MoneybirdImportStore) RecordImported(ctx context.Context, admin resource.ID, kind string, source, target resource.ID) error {
+func (s *MoneybirdImportStore) RecordImported(ctx context.Context, admin resource.ID, kind string, source, target resource.ID, at time.Time) error {
 	return s.q.RecordMoneybirdImportedID(ctx, sqlc.RecordMoneybirdImportedIDParams{
-		AdministrationID: int64(admin), Kind: kind, SourceID: int64(source), TargetID: int64(target),
+		AdministrationID: int64(admin), Kind: kind, SourceID: int64(source), TargetID: int64(target), ImportedAt: timestamp(at),
 	})
+}
+
+// ImportedAt implements mbimport.Store.
+func (s *MoneybirdImportStore) ImportedAt(ctx context.Context, admin resource.ID, kind string, source resource.ID) (time.Time, bool, error) {
+	at, err := s.q.MoneybirdImportedAt(ctx, sqlc.MoneybirdImportedAtParams{AdministrationID: int64(admin), Kind: kind, SourceID: int64(source)})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return time.Time{}, false, nil
+	}
+	if err != nil {
+		return time.Time{}, false, err
+	}
+	return at.Time, true, nil
 }
 
 // Empty implements mbimport.Store.

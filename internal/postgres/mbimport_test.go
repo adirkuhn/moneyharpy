@@ -40,8 +40,15 @@ func TestMoneybirdImportStoreRoundTripLeaseAndEmpty(t *testing.T) {
 		t.Errorf("a leased job was leased again")
 	}
 
-	if err := store.RecordImported(ctx, admin, "ledger_account", 9001, 42); err != nil {
+	if err := store.RecordImported(ctx, admin, "ledger_account", 9001, 42, now); err != nil {
 		t.Fatal(err)
+	}
+	// Recording it again keeps when it first came in.
+	if err := store.RecordImported(ctx, admin, "ledger_account", 9001, 42, now.Add(time.Hour)); err != nil {
+		t.Fatal(err)
+	}
+	if at, ok, err := store.ImportedAt(ctx, admin, "ledger_account", 9001); err != nil || !ok || !at.Equal(now) {
+		t.Errorf("ImportedAt() = %v, %v, %v", at, ok, err)
 	}
 	if got, ok, err := store.Imported(ctx, admin, "ledger_account", 9001); err != nil || !ok || got != 42 {
 		t.Errorf("Imported() = %v, %v, %v", got, ok, err)

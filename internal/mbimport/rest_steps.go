@@ -209,7 +209,7 @@ func (r *run) identities(ctx context.Context) error {
 	var d mbIdentity
 	if err := json.Unmarshal(def, &d); err == nil && d.ID != 0 {
 		st.Total++
-		if _, done, err := r.s.store.Imported(ctx, r.job.AdministrationID, kindIdentity, d.ID.id()); err != nil {
+		if at, done, err := r.s.store.ImportedAt(ctx, r.job.AdministrationID, kindIdentity, d.ID.id()); err != nil {
 			return err
 		} else if !done {
 			changes, err := r.identityChanges(ctx, d)
@@ -225,13 +225,13 @@ func (r *run) identities(ctx context.Context) error {
 					return err
 				}
 			} else {
-				if err := r.s.store.RecordImported(ctx, r.job.AdministrationID, kindIdentity, d.ID.id(), own.ID); err != nil {
+				if err := r.s.store.RecordImported(ctx, r.job.AdministrationID, kindIdentity, d.ID.id(), own.ID, r.s.now()); err != nil {
 					return err
 				}
 				st.Imported++
 			}
 		} else {
-			st.skip()
+			st.found(at, r.job.StartedAt)
 		}
 	}
 	raws, err := r.read.List(ctx, r.job.SourceID, "identities", nil)
