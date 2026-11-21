@@ -173,7 +173,8 @@ func newFakeMoneybird(t *testing.T) *httptest.Server {
 				{"id":"504000000000000904","name":"Huur kantoor","account_type":"expenses","account_id":"4111","active":true,"taxonomy_item":{"code":"WBedHuiBeh"}},
 				{"id":"504000000000000905","name":"Rent","account_type":"expenses","account_id":"4110","active":true},
 				{"id":"504000000000000906","name":"Diversen","account_type":"expenses","account_id":"4900","active":true},
-				{"id":"504000000000000907","name":"Diversen","account_type":"expenses","account_id":"4901","active":true}]`))
+				{"id":"504000000000000907","name":"Diversen","account_type":"expenses","account_id":"4901","active":true},
+				{"id":"504000000000000908","name":"Inventaris","account_type":"non_current_assets","account_id":"0200","active":true,"taxonomy_item":{"code":"BMvaBei"}}]`))
 		case "/123/tax_rates.json":
 			_, _ = w.Write([]byte(`[{"id":"504000000000000911","name":"21% btw","percentage":"21.0","tax_rate_type":"sales_invoice","show_tax":true,"active":true,"country":null},
 				{"id":"504000000000000912","name":"21% btw","percentage":"21.0","tax_rate_type":"purchase_invoice","show_tax":true,"active":true,"country":null}]`))
@@ -207,6 +208,10 @@ func newFakeMoneybird(t *testing.T) *httptest.Server {
 			_, _ = w.Write([]byte(`[{"id":"504000000000000201","type":"BankAccount","name":"Zakelijke rekening","identifier":"NL91ABNA0417164300","currency":"EUR","active":true},
 				{"id":"504000000000000202","type":"MoneybirdPaymentsAccount","name":null,"identifier":"MB-PAY","currency":"EUR","active":true},
 				{"id":"504000000000000203","type":"BankAccount","name":"zakelijke rekening","identifier":"NL20INGB0001234567","currency":"EUR","active":true}]`))
+		case "/123/assets.json":
+			_, _ = w.Write([]byte(`[{"id":"504000000000000781","ledger_account_id":"504000000000000908","name":"Laptop","purchase_date":"2026-01-14","purchase_value":"1200.0",
+				"sources":[{"detail_id":"504000000000000162"}],"value_change_plan":{"active":true,"lifespan_in_years":3,"residual_value":"0.0"},
+				"value_changes":[{"type":"linear","date":"2026-01-31","amount":"-18.06","externally_booked":false},{"type":"linear","date":"2026-02-28","amount":"-33.33","externally_booked":false}],"disposal":null}]`))
 		case "/123/products.json":
 			_, _ = w.Write([]byte(`[{"id":"504000000000000701","title":"Hosting","description":"Hosting","price":"10.0","currency":"EUR","tax_rate_id":"504000000000000911","ledger_account_id":"504000000000000902"}]`))
 		case "/123/projects.json":

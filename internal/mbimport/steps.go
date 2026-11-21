@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/adirkuhn/moneyharpy/internal/administration"
+	"github.com/adirkuhn/moneyharpy/internal/assets"
 	"github.com/adirkuhn/moneyharpy/internal/invoicing"
 	"github.com/adirkuhn/moneyharpy/internal/membership"
 	"github.com/adirkuhn/moneyharpy/internal/notes"
@@ -34,6 +35,9 @@ import (
 // Targets are the services that take in imported records, keeping their
 // Moneybird ids. Each checks a record as it checks one made here.
 type Targets struct {
+	Assets interface {
+		Import(ctx context.Context, admin, user resource.ID, in assets.ImportedAsset) (assets.Asset, error)
+	}
 	Books interface {
 		ImportChart(ctx context.Context, admin, user resource.ID, in bookkeeping.ChartImport) (bookkeeping.ChartIDs, error)
 		UpdateSettings(ctx context.Context, admin, user resource.ID, c bookkeeping.SettingsChanges) (bookkeeping.Settings, error)
@@ -156,6 +160,8 @@ func (r *run) step(ctx context.Context, kind string) error {
 		return r.purchases(ctx, StepReceipts, "documents/receipts", purchases.Receipt)
 	case StepPaymentLinks:
 		return r.paymentLinks(ctx)
+	case StepAssets:
+		return r.assets(ctx)
 	case StepGeneralDocuments:
 		return r.generalDocuments(ctx)
 	case StepTypelessDocuments:

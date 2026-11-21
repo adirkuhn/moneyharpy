@@ -72,6 +72,10 @@ func (l *fakeLedger) AccumulatedDepreciation(_ context.Context, _, _, _ resource
 	return accumulated, nil
 }
 
+func (l *fakeLedger) DepreciationCosts(_ context.Context, _, _, _ resource.ID) (resource.ID, error) {
+	return depreciation, nil
+}
+
 func (l *fakeLedger) LockedUntil(context.Context, resource.ID, resource.ID) (string, error) {
 	return l.locked, nil
 }

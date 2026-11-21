@@ -86,6 +86,9 @@ const (
 	StepGeneralDocuments  = "general_documents"
 	StepTypelessDocuments = "typeless_documents"
 	StepJournal           = "general_journal_documents"
+	// StepAssets comes after the documents and journal entries its assets
+	// were bought with.
+	StepAssets = "assets"
 	// StepTimeEntries comes after the invoices the time was billed on.
 	StepTimeEntries   = "time_entries"
 	StepTaskTemplates = "task_list_templates"
@@ -98,7 +101,7 @@ const (
 // Steps lists the steps an import takes.
 var Steps = []string{
 	StepChart, StepCustomFields, StepIdentities, StepWorkflows, StepContacts, StepProducts, StepProjects, StepFinancialAccounts, StepFinancialMutations, StepEstimates, StepRecurring,
-	StepSalesInvoices, StepExternalInvoices, StepPurchaseInvoices, StepReceipts, StepPaymentLinks, StepGeneralDocuments, StepTypelessDocuments, StepJournal,
+	StepSalesInvoices, StepExternalInvoices, StepPurchaseInvoices, StepReceipts, StepPaymentLinks, StepGeneralDocuments, StepTypelessDocuments, StepJournal, StepAssets,
 	StepTimeEntries, StepTaskTemplates, StepTaskLists, StepLockedPeriod,
 }
 

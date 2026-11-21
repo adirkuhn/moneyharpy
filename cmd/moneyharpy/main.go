@@ -235,7 +235,7 @@ func run(logger *slog.Logger) error {
 	memberService := membership.NewService(admins, postgres.NewMembershipStore(pool), mailer, people, invoices, ids, time.Now)
 	moneybirdImport := mbimport.NewService(admins, mbclient.ImportSource{HTTP: &http.Client{Timeout: time.Minute}}, postgres.NewMoneybirdImportStore(pool), cipher,
 		mbimport.Targets{Books: books, Contacts: contactService, Products: productService, Projects: projectService, Banking: bank, Sales: invoiceService, Purchases: documentService, Journal: ledger,
-			Admin: admins, Invoicing: invoices, Members: memberService, Notes: noteService, TimeEntries: timeEntryService, TaskLists: taskListService}, time.Now)
+			Admin: admins, Invoicing: invoices, Members: memberService, Notes: noteService, TimeEntries: timeEntryService, TaskLists: taskListService, Assets: assetService}, time.Now)
 	handler, err := httpapi.NewHandler(httpapi.Deps{
 		Administrations:   admins,
 		Invoicing:         invoices,

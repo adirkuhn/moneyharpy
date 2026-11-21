@@ -36,7 +36,7 @@ func TestImportFromMoneybird(t *testing.T) {
 		t.Error("the token is shown")
 	}
 	started := decode[httpapi.MoneybirdImport](t, r)
-	if started.State != "running" || len(started.Steps) != 23 {
+	if started.State != "running" || len(started.Steps) != 24 {
 		t.Errorf("started = %+v", started)
 	}
 	if err := h.mbimport.Work(context.Background()); err != nil {
@@ -193,6 +193,11 @@ func TestImportFromMoneybird(t *testing.T) {
 	entry := decode[map[string]any](t, owner.do(http.MethodGet, api+"/documents/general_journal_documents/504000000000000195", nil))
 	if rows, _ := entry["general_journal_document_entries"].([]any); len(rows) != 2 || rows[0].(map[string]any)["id"] != "504000000000000196" {
 		t.Errorf("journal entry = %+v", entry)
+	}
+	// The asset comes in with the depreciation Moneybird booked, linked to the line it was bought on.
+	asset := decode[map[string]any](t, owner.do(http.MethodGet, api+"/assets/504000000000000781", nil))
+	if asset["current_value"] != "1148.61" || len(asset["value_changes"].([]any)) != 2 || len(asset["sources"].([]any)) != 1 {
+		t.Errorf("asset = %+v", asset)
 	}
 	// The books are locked as they were in Moneybird, once all came in.
 	settings := decode[map[string]any](t, owner.do(http.MethodGet, api+"/bookkeeping_settings", nil))
