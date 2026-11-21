@@ -287,3 +287,13 @@ func (f fixture) post(documentType, date string, contact, project *resource.ID, 
 		f.store.entries = append(f.store.entries, e)
 	}
 }
+
+func (f *fakeStore) FirstDay(context.Context, resource.ID) (time.Time, bool, error) {
+	var first time.Time
+	for _, e := range f.entries {
+		if first.IsZero() || e.Date.Before(first) {
+			first = e.Date
+		}
+	}
+	return first, !first.IsZero(), nil
+}

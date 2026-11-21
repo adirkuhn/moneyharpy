@@ -343,6 +343,7 @@ func newHarness(t *testing.T, opts options) *harness {
 	bank.UseHistory(events)
 	h.hooks.UseHistory(events)
 	timeEntryService := timeentries.NewService(admins, timeEntryStore, noteService, ids, time.Now)
+	reportService := reports.NewService(admins, postgres.NewReportStore(pool), h.downloads, books, time.Now)
 	assetService := assets.NewService(admins, books, postgres.NewAssetStore(pool), httpapi.AssetNotifier{Webhooks: h.hooks}, ids, time.Now)
 	assetService.UseHistory(events)
 	assetService.UseNotes(noteService)
@@ -383,7 +384,7 @@ func newHarness(t *testing.T, opts options) *harness {
 	h.mbimport = mbimport.NewService(admins, mbclient.ImportSource{BaseURL: h.moneybird.URL + "/api/v2", HTTP: h.moneybird.Client()},
 		postgres.NewMoneybirdImportStore(pool), settings.NewCipher("test-secret"),
 		mbimport.Targets{Books: books, Contacts: contactService, Products: productService, Projects: projectService, Banking: bank, Sales: invoiceService, Purchases: documentService, Journal: ledger,
-			Admin: admins, Invoicing: invoices, Members: memberService, Notes: noteService, TimeEntries: timeEntryService, TaskLists: taskListService, Assets: assetService}, time.Now)
+			Admin: admins, Invoicing: invoices, Members: memberService, Notes: noteService, TimeEntries: timeEntryService, TaskLists: taskListService, Assets: assetService, Reports: reportService}, time.Now)
 	handler, err := httpapi.NewHandler(httpapi.Deps{
 		Administrations: admins,
 		Invoicing:       invoices,
@@ -406,7 +407,7 @@ func newHarness(t *testing.T, opts options) *harness {
 		Projects:        projectService,
 		Subscriptions:   h.subscriptions,
 		Downloads:       h.downloads,
-		Reports:         reports.NewService(admins, postgres.NewReportStore(pool), h.downloads, books, time.Now),
+		Reports:         reportService,
 		TimeEntries:     timeEntryService,
 		TaskLists:       taskListService,
 		VatReturns:      vatReturnService,

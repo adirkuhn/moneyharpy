@@ -248,3 +248,12 @@ func (s *ReportStore) Contacts(ctx context.Context, admin resource.ID, ids []res
 	}
 	return out, nil
 }
+
+// FirstDay implements reports.Store.
+func (s *ReportStore) FirstDay(ctx context.Context, admin resource.ID) (time.Time, bool, error) {
+	d, err := s.q.ReportFirstDay(ctx, int64(admin))
+	if err != nil || !d.Valid {
+		return time.Time{}, false, err
+	}
+	return d.Time, true, nil
+}

@@ -141,3 +141,7 @@ SELECT c.id, c.company_name, c.firstname, c.lastname, c.customer_id, c.address1,
 FROM contacts c
 WHERE c.administration_id = @administration_id AND c.id = ANY(@ids::bigint[])
 ORDER BY c.id;
+
+-- name: ReportFirstDay :one
+-- The date of the first entry, if any.
+SELECT min(e.date)::date AS first_day FROM ledger_entries e WHERE e.administration_id = @administration_id;

@@ -114,3 +114,30 @@ func TestAnImportedPaymentIsLinkedToItsTransactionAfterwards(t *testing.T) {
 		t.Errorf("unknown payment: %v", err)
 	}
 }
+
+func TestAnImportedTransactionIsBookedOnACategoryAsTheSourceHasIt(t *testing.T) {
+	// A VAT payment Moneybird booked against its VAT return, which is not
+	// here: it is booked on the category the return would have.
+	s, store, _ := newTestService()
+	ctx := context.Background()
+	if _, err := s.ImportAccount(ctx, adminID, owner, ImportedAccount{Origin: resource.Origin{ID: 9201}, Changes: AccountChanges{Name: ptr("Business account")}}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.ImportStatement(ctx, adminID, owner, ImportedStatement{Origin: resource.Origin{ID: 9403}, AccountID: 9201, Mutations: []ImportedMutation{
+		{Origin: resource.Origin{ID: 9503}, Input: MutationInput{Date: ptr("2025-12-29"), Message: ptr("Belastingdienst"), Amount: ptr("-1589")}},
+	}}); err != nil {
+		t.Fatal(err)
+	}
+	vat := resource.ID(9601)
+	booked, err := s.BookImported(ctx, adminID, owner, 9503, vat, 158900)
+	if err != nil || !booked {
+		t.Fatalf("booked %v, %v", booked, err)
+	}
+	m := store.mutations[9503]
+	if m.State != Processed || len(m.Bookings) != 1 || m.Bookings[0].LedgerAccountID != vat || m.Bookings[0].Price != 158900 {
+		t.Errorf("transaction %+v", m)
+	}
+	if booked, err := s.BookImported(ctx, adminID, owner, 9503, vat, 158900); err != nil || booked {
+		t.Errorf("again %v, %v", booked, err)
+	}
+}

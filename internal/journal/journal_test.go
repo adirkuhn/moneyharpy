@@ -341,6 +341,22 @@ func TestAnEmptyImportedJournalEntryComesInAsMoneybirdHasIt(t *testing.T) {
 	}
 }
 
+func TestAnImportCorrectionIsBookedInTheLockedPeriodToo(t *testing.T) {
+	// The source's books are as they are, its locked period too.
+	s, docs, ledger := newService()
+	ledger.locked = "2026-10-31"
+	d, err := s.ImportCorrection(context.Background(), adminID, owner, DocumentChanges{Reference: ptr("VAT as in Moneybird"), Date: ptr("2026-09-30"), Rows: rows(rent, "100", "", bank, "", "100")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if d.ID == 0 || len(d.Rows) != 2 || len(docs.docs) != 1 {
+		t.Errorf("entry = %+v", d)
+	}
+	if _, err := s.ImportCorrection(context.Background(), adminID, owner, DocumentChanges{Date: ptr("2026-09-30"), Rows: rows(rent, "100", "", bank, "", "90")}); err == nil {
+		t.Error("an unbalanced correction was booked")
+	}
+}
+
 func TestJournalEntryChecksRows(t *testing.T) {
 	s, _, _ := newService()
 	in := rows(debtors, "10", "", closed, "", "10", resource.ID(1), "5", "5")

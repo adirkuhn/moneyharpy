@@ -32,6 +32,8 @@ func newFakeMoneybird(t *testing.T) *httptest.Server {
 			"504000000000000303": `{"id":"504000000000000303","financial_account_id":"504000000000000201","financial_statement_id":"504000000000000402","date":"2026-02-10","message":"PUR-77","amount":"-121.0"}`,
 			"504000000000000304": `{"id":"504000000000000304","financial_account_id":"504000000000000201","financial_statement_id":"504000000000000402","date":"2026-02-20","message":"PUR-78","amount":"-24.2",
 				"payments":[{"id":"504000000000000168","invoice_type":"Document","invoice_id":"504000000000000165","price":"24.2","financial_mutation_id":"504000000000000304"}]}`,
+			"504000000000000305": `{"id":"504000000000000305","financial_account_id":"504000000000000201","financial_statement_id":"504000000000000402","date":"2026-02-25","message":"Belastingdienst","amount":"-15.89",
+				"payments":[{"id":"504000000000000306","invoice_type":"VatDocument","invoice_id":"504000000000000307","price":"15.89","financial_mutation_id":"504000000000000305"}]}`,
 		},
 		"sales_invoices": {
 			"504000000000000111": `{"id":"504000000000000111","contact_id":"504000000000000501","invoice_id":"2026-0001","state":"paid","original_estimate_id":"504000000000000141","workflow_id":"504000000000000581",
@@ -208,6 +210,9 @@ func newFakeMoneybird(t *testing.T) *httptest.Server {
 			_, _ = w.Write([]byte(`[{"id":"504000000000000201","type":"BankAccount","name":"Zakelijke rekening","identifier":"NL91ABNA0417164300","currency":"EUR","active":true},
 				{"id":"504000000000000202","type":"MoneybirdPaymentsAccount","name":null,"identifier":"MB-PAY","currency":"EUR","active":true},
 				{"id":"504000000000000203","type":"BankAccount","name":"zakelijke rekening","identifier":"NL20INGB0001234567","currency":"EUR","active":true}]`))
+		case "/123/reports/balance_sheet.json":
+			// Its VAT matches what came in.
+			_, _ = w.Write([]byte(`{}`))
 		case "/123/assets.json":
 			_, _ = w.Write([]byte(`[{"id":"504000000000000781","ledger_account_id":"504000000000000908","name":"Laptop","purchase_date":"2026-01-14","purchase_value":"1200.0",
 				"sources":[{"detail_id":"504000000000000162"}],"value_change_plan":{"active":true,"lifespan_in_years":3,"residual_value":"0.0"},

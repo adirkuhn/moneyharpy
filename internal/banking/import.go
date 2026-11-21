@@ -166,6 +166,32 @@ func (s *Service) LinkImportedPayment(ctx context.Context, admin, user, mutation
 	return true, nil
 }
 
+// BookImported books an imported transaction on a category as the source
+// has it, such as a VAT payment against a VAT return that cannot come in;
+// price is positive in the transaction's direction. Like the rest of an
+// import it takes the locked period as the source has it. It reports
+// whether it booked; a transaction booked so already stays as it is.
+func (s *Service) BookImported(ctx context.Context, admin, user, mutation, ledger resource.ID, price Amount) (bool, error) {
+	if _, err := s.ensure(ctx, admin, user); err != nil {
+		return false, err
+	}
+	m, err := s.store.Mutation(ctx, admin, mutation)
+	if err != nil {
+		return false, err
+	}
+	if slices.ContainsFunc(m.Bookings, func(b Booking) bool { return b.LedgerAccountID == ledger && b.Price == price }) {
+		return false, nil
+	}
+	now := s.now()
+	b := Booking{ID: s.ids.Next(), AdministrationID: admin, MutationID: m.ID, LedgerAccountID: ledger, Price: price, CreatedAt: now, UpdatedAt: now}
+	m.Bookings = append(m.Bookings, b)
+	m.settle(now)
+	if err := s.store.SaveBookings(ctx, m, []Booking{b}, nil); err != nil {
+		return false, fmt.Errorf("store booking: %w", err)
+	}
+	return true, nil
+}
+
 // SettleImported settles a transaction whose payments came in linked to it
 // with their invoices, as the transaction settles when they are linked here.
 func (s *Service) SettleImported(ctx context.Context, admin, user, mutation resource.ID) error {

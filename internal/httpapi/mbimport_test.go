@@ -36,7 +36,7 @@ func TestImportFromMoneybird(t *testing.T) {
 		t.Error("the token is shown")
 	}
 	started := decode[httpapi.MoneybirdImport](t, r)
-	if started.State != "running" || len(started.Steps) != 24 {
+	if started.State != "running" || len(started.Steps) != 25 {
 		t.Errorf("started = %+v", started)
 	}
 	if err := h.mbimport.Work(context.Background()); err != nil {
@@ -166,6 +166,11 @@ func TestImportFromMoneybird(t *testing.T) {
 	corrected := decode[map[string]any](t, owner.do(http.MethodGet, api+"/documents/purchase_invoices/504000000000000170", nil))
 	if pays, _ := corrected["payments"].([]any); corrected["state"] != "paid" || len(pays) != 2 {
 		t.Errorf("corrected purchase invoice = %v, %v", corrected["state"], corrected["payments"])
+	}
+	// What paid a VAT return, which cannot come in, is booked where the return would have it.
+	vatPaid := decode[map[string]any](t, owner.do(http.MethodGet, api+"/financial_mutations/504000000000000305", nil))
+	if vatPaid["state"] != "processed" || len(vatPaid["ledger_account_bookings"].([]any)) != 1 {
+		t.Errorf("VAT payment = %+v", vatPaid)
 	}
 	// A purchase invoice Moneybird has not processed yet comes in so, booking nothing.
 	unprocessed := decode[map[string]any](t, owner.do(http.MethodGet, api+"/documents/purchase_invoices/504000000000000166", nil))

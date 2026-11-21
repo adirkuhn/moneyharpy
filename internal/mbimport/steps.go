@@ -10,6 +10,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/assets"
 	"github.com/adirkuhn/moneyharpy/internal/invoicing"
 	"github.com/adirkuhn/moneyharpy/internal/membership"
+	"github.com/adirkuhn/moneyharpy/internal/money"
 	"github.com/adirkuhn/moneyharpy/internal/notes"
 	"github.com/adirkuhn/moneyharpy/internal/tasklists"
 	"github.com/adirkuhn/moneyharpy/internal/timeentries"
@@ -41,6 +42,11 @@ type Targets struct {
 	Books interface {
 		ImportChart(ctx context.Context, admin, user resource.ID, in bookkeeping.ChartImport) (bookkeeping.ChartIDs, error)
 		UpdateSettings(ctx context.Context, admin, user resource.ID, c bookkeeping.SettingsChanges) (bookkeeping.Settings, error)
+		SystemLedgerAccount(ctx context.Context, admin, user resource.ID, role string) (resource.ID, error)
+	}
+	Reports interface {
+		FirstDay(ctx context.Context, admin, user resource.ID) (time.Time, bool, error)
+		Balances(ctx context.Context, admin, user resource.ID, day time.Time) (map[resource.ID]money.Amount, error)
 	}
 	Contacts interface {
 		Import(ctx context.Context, admin, user resource.ID, o resource.Origin, c contacts.Changes, people []contacts.ImportedPerson) (contacts.Contact, error)
@@ -58,6 +64,7 @@ type Targets struct {
 		LinkBooking(ctx context.Context, admin, id, user resource.ID, l banking.Link) (banking.Mutation, error)
 		LinkImportedPayment(ctx context.Context, admin, user, mutation resource.ID, invoiceType string, invoice resource.ID, price banking.Amount) (bool, error)
 		SettleImported(ctx context.Context, admin, user, mutation resource.ID) error
+		BookImported(ctx context.Context, admin, user, mutation, ledger resource.ID, price banking.Amount) (bool, error)
 	}
 	Sales interface {
 		ImportPayments(ctx context.Context, admin, user resource.ID, kind string, id resource.ID, payments []sales.ImportedPayment) (bool, error)
@@ -103,6 +110,7 @@ type Targets struct {
 	Journal interface {
 		Import(ctx context.Context, admin, user resource.ID, o resource.Origin, c journal.DocumentChanges, rows []resource.Origin) (journal.Document, error)
 		AddDocumentAttachment(ctx context.Context, admin, id, user resource.ID, filename, contentType string, data []byte) (attachments.Attachment, error)
+		ImportCorrection(ctx context.Context, admin, user resource.ID, c journal.DocumentChanges) (journal.Document, error)
 	}
 }
 
@@ -162,6 +170,8 @@ func (r *run) step(ctx context.Context, kind string) error {
 		return r.paymentLinks(ctx)
 	case StepAssets:
 		return r.assets(ctx)
+	case StepVAT:
+		return r.vat(ctx)
 	case StepGeneralDocuments:
 		return r.generalDocuments(ctx)
 	case StepTypelessDocuments:

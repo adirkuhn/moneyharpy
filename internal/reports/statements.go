@@ -490,3 +490,28 @@ func (s *Service) LedgerAccount(ctx context.Context, admin, user, ledger resourc
 func endOfMonth(t time.Time) time.Time {
 	return time.Date(t.Year(), t.Month()+1, 1, 0, 0, 0, 0, time.UTC).AddDate(0, 0, -1)
 }
+
+// Balances returns the balance of every category with entries at the end
+// of the day, debits positive.
+func (s *Service) Balances(ctx context.Context, admin, user resource.ID, day time.Time) (map[resource.ID]money.Amount, error) {
+	if _, err := s.admins.Get(ctx, admin, user); err != nil {
+		return nil, err
+	}
+	sums, err := s.store.Movements(ctx, admin, nil, day, nil)
+	if err != nil {
+		return nil, fmt.Errorf("sum journal: %w", err)
+	}
+	out := make(map[resource.ID]money.Amount, len(sums))
+	for _, sum := range sums {
+		out[sum.LedgerAccountID] = sum.Amount
+	}
+	return out, nil
+}
+
+// FirstDay returns the date of the first entry in the books, if any.
+func (s *Service) FirstDay(ctx context.Context, admin, user resource.ID) (time.Time, bool, error) {
+	if _, err := s.admins.Get(ctx, admin, user); err != nil {
+		return time.Time{}, false, err
+	}
+	return s.store.FirstDay(ctx, admin)
+}

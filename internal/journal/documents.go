@@ -449,6 +449,10 @@ func (s *Service) apply(ctx context.Context, admin, user resource.ID, d *Documen
 	if err := Balance(d.Entries()); err != nil {
 		return err
 	}
+	if imported {
+		// The source's locked period is as it was there.
+		return nil
+	}
 	return s.checkUnlocked(ctx, admin, user, d.Date, was)
 }
 

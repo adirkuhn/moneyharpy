@@ -166,6 +166,25 @@ func TestWorkingCapitalCountsACreditOnCurrentAssetsAsToPay(t *testing.T) {
 	}
 }
 
+func TestBalancesPerCategoryAtADay(t *testing.T) {
+	f := books()
+	day := func(s string) time.Time { d, _ := time.Parse(time.DateOnly, s); return d }
+	b, err := f.Balances(ctx, adminID, owner, day("2025-05-31"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if b[debtorsID] != 36300 || b[payableVAT] != -6300 || b[bank] != 0 {
+		t.Errorf("balances = %v", b)
+	}
+	first, ok, err := f.FirstDay(ctx, adminID, owner)
+	if err != nil || !ok || first.Format(time.DateOnly) != "2024-01-02" {
+		t.Errorf("first day = %v, %v, %v", first, ok, err)
+	}
+	if _, err := f.Balances(ctx, adminID, stranger, day("2025-05-31")); err == nil {
+		t.Error("a stranger read the balances")
+	}
+}
+
 func TestTax(t *testing.T) {
 	f := books()
 	f.store.tax = []TaxSum{

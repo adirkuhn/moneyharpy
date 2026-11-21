@@ -10366,7 +10366,7 @@ export interface components {
         };
         MoneybirdImportStep: {
             /** @enum {string} */
-            kind: "chart" | "custom_fields" | "identities" | "workflows" | "contacts" | "products" | "projects" | "financial_accounts" | "financial_mutations" | "estimates" | "recurring_sales_invoices" | "sales_invoices" | "external_sales_invoices" | "purchase_invoices" | "receipts" | "payment_links" | "general_documents" | "typeless_documents" | "general_journal_documents" | "assets" | "time_entries" | "task_list_templates" | "task_lists" | "locked_period";
+            kind: "chart" | "custom_fields" | "identities" | "workflows" | "contacts" | "products" | "projects" | "financial_accounts" | "financial_mutations" | "estimates" | "recurring_sales_invoices" | "sales_invoices" | "external_sales_invoices" | "purchase_invoices" | "receipts" | "payment_links" | "general_documents" | "typeless_documents" | "general_journal_documents" | "assets" | "vat_balances" | "time_entries" | "task_list_templates" | "task_lists" | "locked_period";
             total: number;
             imported: number;
             /** @description Records imported before, which stay as they are. */

@@ -5,6 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/adirkuhn/moneyharpy/internal/attachments"
+	"github.com/adirkuhn/moneyharpy/internal/journal"
+	"github.com/adirkuhn/moneyharpy/internal/money"
+	"maps"
 	"net/url"
 	"slices"
 	"strings"
@@ -44,6 +48,8 @@ func (fakeAdmins) Get(_ context.Context, id, user resource.ID) (administration.L
 
 // fakeMoneybird serves canned records, as Moneybird's API would.
 type fakeMoneybird struct {
+	// reports are Moneybird's reports by path and query.
+	reports map[string]string
 	down    bool
 	token   string
 	records map[string][]string
@@ -119,7 +125,10 @@ func (r *fakeReader) FetchByIDs(_ context.Context, _, kind string, ids []string)
 	return out, err
 }
 
-func (r *fakeReader) Get(context.Context, string, string, url.Values) (json.RawMessage, error) {
+func (r *fakeReader) Get(_ context.Context, _, path string, q url.Values) (json.RawMessage, error) {
+	if raw, ok := r.f.reports[path+"?"+q.Encode()]; ok {
+		return json.RawMessage(raw), nil
+	}
 	return json.RawMessage(`{}`), nil
 }
 
@@ -206,6 +215,8 @@ func (plainSecrets) Open(s string) (string, error) { return strings.TrimPrefix(s
 // fakeTargets take in records as the services would, refusing a contact
 // without a name to show a record the import passes.
 type fakeTargets struct {
+	// roles are the categories of system roles.
+	roles map[string]resource.ID
 	// takenNumbers are customer numbers other contacts here have.
 	takenNumbers []string
 	// updates are the changes made to contacts that came in before.
@@ -229,6 +240,48 @@ func (f *fakeTargets) ImportChart(_ context.Context, _, _ resource.ID, in bookke
 		ids[r.Origin.ID] = r.Origin.ID
 	}
 	return ids, nil
+}
+
+func (f *fakeTargets) SystemLedgerAccount(_ context.Context, _, _ resource.ID, role string) (resource.ID, error) {
+	return f.roles[role], nil
+}
+
+// fakeBooks keeps the balances and the corrections booked on them.
+type fakeBooks struct {
+	first       time.Time
+	balances    map[resource.ID]money.Amount
+	corrections []journal.DocumentChanges
+}
+
+func (b *fakeBooks) FirstDay(context.Context, resource.ID, resource.ID) (time.Time, bool, error) {
+	return b.first, !b.first.IsZero(), nil
+}
+
+func (b *fakeBooks) Balances(_ context.Context, _, _ resource.ID, day time.Time) (map[resource.ID]money.Amount, error) {
+	out := maps.Clone(b.balances)
+	for _, c := range b.corrections {
+		if d, _ := time.Parse(time.DateOnly, *c.Date); !d.After(day) {
+			for _, row := range c.Rows {
+				debit, _ := money.ParseAmount(deref(row.Debit))
+				credit, _ := money.ParseAmount(deref(row.Credit))
+				out[*row.LedgerAccountID] += debit - credit
+			}
+		}
+	}
+	return out, nil
+}
+
+func (b *fakeBooks) Import(context.Context, resource.ID, resource.ID, resource.Origin, journal.DocumentChanges, []resource.Origin) (journal.Document, error) {
+	return journal.Document{}, nil
+}
+
+func (b *fakeBooks) AddDocumentAttachment(context.Context, resource.ID, resource.ID, resource.ID, string, string, []byte) (attachments.Attachment, error) {
+	return attachments.Attachment{}, nil
+}
+
+func (b *fakeBooks) ImportCorrection(_ context.Context, _, _ resource.ID, c journal.DocumentChanges) (journal.Document, error) {
+	b.corrections = append(b.corrections, c)
+	return journal.Document{ID: resource.ID(len(b.corrections))}, nil
 }
 
 func (f *fakeTargets) UpdateSettings(context.Context, resource.ID, resource.ID, bookkeeping.SettingsChanges) (bookkeeping.Settings, error) {
@@ -642,6 +695,49 @@ func TestImportingAgainBringsInWhatAContactCameInWithout(t *testing.T) {
 	}
 	if st := store.job.Step(StepContacts); st.Skipped != 1 || st.Failed != 0 {
 		t.Errorf("contacts step %+v", st)
+	}
+}
+
+func TestVATComesToWhatMoneybirdHasEveryMonth(t *testing.T) {
+	// Moneybird's VAT returns move the VAT to what was paid; they cannot
+	// come in, so the month they did gets a correction, after which the
+	// VAT is as in Moneybird.
+	s, store, mb, f := setup()
+	ctx := context.Background()
+	f.roles = map[string]resource.ID{"payable_vat": 9701, "receivable_vat": 9702, "vat_paid_or_received": 9703}
+	for _, id := range []resource.ID{9701, 9702, 9703} {
+		store.imported[key(kindLedgerAccount, id)] = id
+	}
+	books := &fakeBooks{first: time.Date(2026, 9, 3, 0, 0, 0, 0, time.UTC), balances: map[resource.ID]money.Amount{9701: -10000, 9702: 3000}}
+	s.targets.Reports, s.targets.Journal = books, books
+	sheet := `{"debit":{"current_assets":[{"ledger_account_id":"9702","value":"10.0","children":[]}]},
+		"credit":{"current_liabilities":[{"ledger_account_id":"9701","value":"60.0","children":[]},{"ledger_account_id":"9703","value":"20.0","children":[]}]}}`
+	mb.reports = map[string]string{}
+	for _, m := range []string{"202609", "202610", "202611"} {
+		mb.reports["reports/balance_sheet.json?period="+m] = sheet
+	}
+	if _, err := s.Start(ctx, adminID, owner, "good", source); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.Work(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if len(books.corrections) != 1 {
+		t.Fatalf("corrections = %+v", books.corrections)
+	}
+	c := books.corrections[0]
+	if *c.Date != "2026-09-30" || len(c.Rows) != 3 {
+		t.Errorf("correction = %+v", c)
+	}
+	got := map[resource.ID]string{}
+	for _, row := range c.Rows {
+		got[*row.LedgerAccountID] = deref(row.Debit) + "/" + deref(row.Credit)
+	}
+	if got[9701] != "40.0/" || got[9702] != "/20.0" || got[9703] != "/20.0" {
+		t.Errorf("rows = %v", got)
+	}
+	if st := store.job.Step(StepVAT); st.Total != 3 || st.Imported != 1 || st.Skipped != 2 {
+		t.Errorf("step %+v", st)
 	}
 }
 
