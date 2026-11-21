@@ -173,11 +173,25 @@ func (m *memStore) RecordImported(_ context.Context, _ resource.ID, kind string,
 }
 func (m *memStore) Empty(context.Context, resource.ID) (bool, error) { return m.empty, nil }
 func (m *memStore) RecordProblem(_ context.Context, _ resource.ID, p Problem) error {
+	m.problems = slices.DeleteFunc(m.problems, func(q Problem) bool { return q.Kind == p.Kind && q.SourceID == p.SourceID && q.Message == p.Message })
 	m.problems = append(m.problems, p)
 	return nil
 }
 func (m *memStore) ResolveProblems(_ context.Context, _ resource.ID, kind string, id resource.ID) error {
 	m.problems = slices.DeleteFunc(m.problems, func(p Problem) bool { return p.Kind == kind && p.SourceID == id && !p.Partial })
+	return nil
+}
+func (m *memStore) Partials(_ context.Context, _ resource.ID, kind string) (map[resource.ID][]string, error) {
+	out := map[resource.ID][]string{}
+	for _, p := range m.problems {
+		if p.Kind == kind && p.Partial {
+			out[p.SourceID] = append(out[p.SourceID], p.Message)
+		}
+	}
+	return out, nil
+}
+func (m *memStore) ForgetProblem(_ context.Context, _ resource.ID, kind string, id resource.ID, message string) error {
+	m.problems = slices.DeleteFunc(m.problems, func(p Problem) bool { return p.Kind == kind && p.SourceID == id && p.Message == message })
 	return nil
 }
 func (m *memStore) Problems(context.Context, resource.ID, int, int) ([]Problem, int, error) {
@@ -194,6 +208,8 @@ func (plainSecrets) Open(s string) (string, error) { return strings.TrimPrefix(s
 type fakeTargets struct {
 	// takenNumbers are customer numbers other contacts here have.
 	takenNumbers []string
+	// updates are the changes made to contacts that came in before.
+	updates []contacts.Changes
 	chart        bookkeeping.ChartImport
 	contacts     map[resource.ID]contacts.Changes
 	people       map[resource.ID][]contacts.ImportedPerson
@@ -225,6 +241,14 @@ func (f *fakeTargets) Import(_ context.Context, _, _ resource.ID, o resource.Ori
 		verr.Add("company_name", "can't be blank")
 		return contacts.Contact{}, verr.OrNil()
 	}
+	if c.SendInvoicesToEmail != nil && !strings.Contains(*c.SendInvoicesToEmail, "@") {
+		var verr resource.ValidationError
+		verr.Add("send_invoices_to_email", "is not a valid email address")
+		return contacts.Contact{}, verr.OrNil()
+	}
+	if _, ok := f.contacts[o.ID]; ok {
+		return contacts.Contact{}, pgError{"23505"}
+	}
 	number := "99"
 	if c.CustomerID != nil {
 		number = *c.CustomerID
@@ -236,6 +260,16 @@ func (f *fakeTargets) Import(_ context.Context, _, _ resource.ID, o resource.Ori
 	}
 	f.contacts[o.ID], f.people[o.ID] = c, people
 	return contacts.Contact{ID: o.ID, CustomerID: number}, nil
+}
+
+func (f *fakeTargets) Update(_ context.Context, _, id, _ resource.ID, c contacts.Changes) (contacts.Contact, error) {
+	if c.SendInvoicesToEmail != nil && !strings.Contains(*c.SendInvoicesToEmail, "@") {
+		var verr resource.ValidationError
+		verr.Add("send_invoices_to_email", "is not a valid email address")
+		return contacts.Contact{}, verr.OrNil()
+	}
+	f.updates = append(f.updates, c)
+	return contacts.Contact{ID: id}, nil
 }
 
 type productTarget struct{ f *fakeTargets }
@@ -569,6 +603,45 @@ func TestAContactWhoseNumberIsTakenComesInWithTheNext(t *testing.T) {
 		return p.SourceID == 503 && p.Partial && p.Message == "came in as customer 99, as customer 7 is another contact here"
 	}) {
 		t.Errorf("problems %+v", store.problems)
+	}
+}
+
+func TestImportingAgainBringsInWhatAContactCameInWithout(t *testing.T) {
+	s, store, mb, f := setup()
+	ctx := context.Background()
+	mb.records["contacts"] = []string{`{"id":"503","company_name":"Beispiel GmbH","customer_id":"7","send_invoices_to_email":"billing"}`}
+	if _, err := s.Start(ctx, adminID, owner, "good", source); err != nil {
+		t.Fatal(err)
+	}
+	_ = s.Work(ctx)
+	if len(store.problems) != 1 || !strings.HasPrefix(store.problems[0].Message, "came in without send_invoices_to_email") {
+		t.Fatalf("problems %+v", store.problems)
+	}
+	// Still wrong in Moneybird: it stays as it was, and so does the note.
+	store.empty = false
+	later := now.Add(time.Hour)
+	s.now = func() time.Time { return later }
+	if _, err := s.Start(ctx, adminID, owner, "", ""); err != nil {
+		t.Fatal(err)
+	}
+	_ = s.Work(ctx)
+	if len(f.updates) != 0 || len(store.problems) != 1 {
+		t.Fatalf("updates %+v, problems %+v", f.updates, store.problems)
+	}
+	// Put right in Moneybird: the address comes in, and only it; the note is gone.
+	mb.records["contacts"] = []string{`{"id":"503","company_name":"Beispiel GmbH Neu","customer_id":"7","send_invoices_to_email":"billing@example.com"}`}
+	if _, err := s.Start(ctx, adminID, owner, "", ""); err != nil {
+		t.Fatal(err)
+	}
+	_ = s.Work(ctx)
+	if len(f.updates) != 1 || deref(f.updates[0].SendInvoicesToEmail) != "billing@example.com" || f.updates[0].CompanyName != nil {
+		t.Errorf("updates %+v", f.updates)
+	}
+	if len(store.problems) != 0 {
+		t.Errorf("problems %+v", store.problems)
+	}
+	if st := store.job.Step(StepContacts); st.Skipped != 1 || st.Failed != 0 {
+		t.Errorf("contacts step %+v", st)
 	}
 }
 

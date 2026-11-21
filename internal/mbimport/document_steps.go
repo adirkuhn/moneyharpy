@@ -32,8 +32,11 @@ type addFile func(ctx context.Context, filename, contentType string, data []byte
 
 // attach downloads a record's files from Moneybird and stores them with it.
 // A file that cannot come in is noted; the record stays.
-func (r *run) attach(ctx context.Context, st *Step, base string, id resource.ID, files []mbAttachment, add addFile) error {
+func (r *run) attach(ctx context.Context, st *Step, kind, base string, id resource.ID, files []mbAttachment, add addFile) error {
 	for _, f := range files {
+		if !r.wants(fmt.Sprintf("file %s left out", f.Filename)) {
+			continue
+		}
 		data, contentType, err := r.read.Download(ctx, r.job.SourceID, fmt.Sprintf("%s/%d/attachments/%d/download", base, id, f.ID))
 		if err == nil {
 			if f.ContentType != "" {
@@ -43,7 +46,7 @@ func (r *run) attach(ctx context.Context, st *Step, base string, id resource.ID,
 		}
 		if err != nil {
 			if isRecordProblem(err) || isFileProblem(err) {
-				if err := r.partial(ctx, st, base, id, fmt.Sprintf("file %s left out: %s", f.Filename, describe(err))); err != nil {
+				if err := r.partial(ctx, st, kind, id, fmt.Sprintf("file %s left out: %s", f.Filename, describe(err))); err != nil {
 					return err
 				}
 				continue
@@ -56,14 +59,17 @@ func (r *run) attach(ctx context.Context, st *Step, base string, id resource.ID,
 
 // keepPDF stores the PDF Moneybird made of a sent invoice or estimate: the
 // one the contact received, which a PDF made here would not be.
-func (r *run) keepPDF(ctx context.Context, st *Step, path, name string, add addFile) error {
+func (r *run) keepPDF(ctx context.Context, st *Step, kind string, id resource.ID, path, name string, add addFile) error {
+	if !r.wants(path + " left out") {
+		return nil
+	}
 	data, _, err := r.read.Download(ctx, r.job.SourceID, path)
 	if err == nil {
 		err = add(ctx, name, "application/pdf", data)
 	}
 	if err != nil {
 		if isRecordProblem(err) || isFileProblem(err) {
-			return r.partial(ctx, st, "pdf", 0, fmt.Sprintf("%s left out: %s", path, describe(err)))
+			return r.partial(ctx, st, kind, id, fmt.Sprintf("%s left out: %s", path, describe(err)))
 		}
 		return err
 	}
@@ -114,14 +120,14 @@ func (r *run) estimates(ctx context.Context) error {
 			_, err := r.s.targets.Sales.AddEstimateAttachment(ctx, r.job.AdministrationID, est.ID, r.job.UserID, name, contentType, data)
 			return err
 		}
-		if err := r.attach(ctx, st, "estimates", est.ID, e.Attachments, add); err != nil {
+		if err := r.attach(ctx, st, kindEstimate, "estimates", est.ID, e.Attachments, add); err != nil {
 			return 0, err
 		}
 		if err := r.notes(ctx, st, sales.EstimateEntityType, est.ID, e.Notes); err != nil {
 			return 0, err
 		}
 		if e.State != "draft" && deref(e.EstimateID) != "" {
-			if err := r.keepPDF(ctx, st, fmt.Sprintf("estimates/%d/download_pdf", est.ID), fileName(deref(e.EstimateID))+" (Moneybird).pdf", add); err != nil {
+			if err := r.keepPDF(ctx, st, kindEstimate, e.ID.id(), fmt.Sprintf("estimates/%d/download_pdf", est.ID), fileName(deref(e.EstimateID))+" (Moneybird).pdf", add); err != nil {
 				return 0, err
 			}
 		}
@@ -199,7 +205,7 @@ func (r *run) purchases(ctx context.Context, step, path, kind string) error {
 		if err != nil {
 			return 0, err
 		}
-		err = r.attach(ctx, r.job.Step(step), path, doc.ID, d.Attachments, func(ctx context.Context, name, contentType string, data []byte) error {
+		err = r.attach(ctx, r.job.Step(step), idKind, path, doc.ID, d.Attachments, func(ctx context.Context, name, contentType string, data []byte) error {
 			_, err := r.s.targets.Purchases.AddAttachment(ctx, r.job.AdministrationID, r.job.UserID, kind, doc.ID, name, contentType, data)
 			return err
 		})
@@ -225,7 +231,7 @@ func (r *run) generalDocuments(ctx context.Context) error {
 		if err != nil {
 			return 0, err
 		}
-		err = r.attach(ctx, r.job.Step(StepGeneralDocuments), "documents/general_documents", g.ID, d.Attachments, func(ctx context.Context, name, contentType string, data []byte) error {
+		err = r.attach(ctx, r.job.Step(StepGeneralDocuments), kindGeneral, "documents/general_documents", g.ID, d.Attachments, func(ctx context.Context, name, contentType string, data []byte) error {
 			_, err := r.s.targets.Purchases.AddGeneralAttachment(ctx, r.job.AdministrationID, g.ID, r.job.UserID, name, contentType, data)
 			return err
 		})
@@ -247,7 +253,7 @@ func (r *run) typelessDocuments(ctx context.Context) error {
 		if err != nil {
 			return 0, err
 		}
-		err = r.attach(ctx, r.job.Step(StepTypelessDocuments), "documents/typeless_documents", t.ID, d.Attachments, func(ctx context.Context, name, contentType string, data []byte) error {
+		err = r.attach(ctx, r.job.Step(StepTypelessDocuments), kindTypeless, "documents/typeless_documents", t.ID, d.Attachments, func(ctx context.Context, name, contentType string, data []byte) error {
 			_, err := r.s.targets.Purchases.AddTypelessAttachment(ctx, r.job.AdministrationID, t.ID, r.job.UserID, name, contentType, data)
 			return err
 		})
@@ -282,7 +288,7 @@ func (r *run) journal(ctx context.Context) error {
 		if err != nil {
 			return 0, err
 		}
-		err = r.attach(ctx, r.job.Step(StepJournal), "documents/general_journal_documents", doc.ID, j.Attachments, func(ctx context.Context, name, contentType string, data []byte) error {
+		err = r.attach(ctx, r.job.Step(StepJournal), kindJournal, "documents/general_journal_documents", doc.ID, j.Attachments, func(ctx context.Context, name, contentType string, data []byte) error {
 			_, err := r.s.targets.Journal.AddDocumentAttachment(ctx, r.job.AdministrationID, doc.ID, r.job.UserID, name, contentType, data)
 			return err
 		})

@@ -243,6 +243,10 @@ type Store interface {
 	// forgets that a record failed once it came in.
 	RecordProblem(ctx context.Context, admin resource.ID, p Problem) error
 	ResolveProblems(ctx context.Context, admin resource.ID, kind string, source resource.ID) error
+	// Partials returns, per record of a kind, the notes of what it came in
+	// without; ForgetProblem forgets one note, once it no longer holds.
+	Partials(ctx context.Context, admin resource.ID, kind string) (map[resource.ID][]string, error)
+	ForgetProblem(ctx context.Context, admin resource.ID, kind string, source resource.ID, message string) error
 	// Problems returns one page of them, by step and record, with how many
 	// there are in all.
 	Problems(ctx context.Context, admin resource.ID, page, perPage int) ([]Problem, int, error)

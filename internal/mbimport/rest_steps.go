@@ -390,6 +390,10 @@ func (r *run) taskLists(ctx context.Context) error {
 // notes brings in a record's notes and to-dos, written by the importing
 // owner, as Moneybird's users are not members here.
 func (r *run) notes(ctx context.Context, st *Step, entityType string, entity resource.ID, in []mbNote) error {
+	if r.mending != nil {
+		// The notes came in with the record.
+		return nil
+	}
 	for _, n := range in {
 		_, err := r.s.targets.Notes.Import(ctx, r.job.AdministrationID, entityType, entity, r.job.UserID, notes.Imported{
 			Origin: origin(n.ID, n.stamps), Input: notes.Input{Note: n.Note, Todo: n.Todo}, CompletedAt: n.CompletedAt.time(),

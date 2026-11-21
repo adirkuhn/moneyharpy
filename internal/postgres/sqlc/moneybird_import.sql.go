@@ -47,6 +47,27 @@ func (q *Queries) CountMoneybirdImportProblems(ctx context.Context, administrati
 	return count, err
 }
 
+const forgetMoneybirdImportProblem = `-- name: ForgetMoneybirdImportProblem :exec
+DELETE FROM moneybird_import_problems WHERE administration_id = $1 AND kind = $2 AND source_id = $3 AND message = $4
+`
+
+type ForgetMoneybirdImportProblemParams struct {
+	AdministrationID int64
+	Kind             string
+	SourceID         int64
+	Message          string
+}
+
+func (q *Queries) ForgetMoneybirdImportProblem(ctx context.Context, arg ForgetMoneybirdImportProblemParams) error {
+	_, err := q.db.Exec(ctx, forgetMoneybirdImportProblem,
+		arg.AdministrationID,
+		arg.Kind,
+		arg.SourceID,
+		arg.Message,
+	)
+	return err
+}
+
 const leaseDueMoneybirdImports = `-- name: LeaseDueMoneybirdImports :many
 UPDATE moneybird_imports i SET next_attempt_at = $1
 WHERE i.administration_id IN (
@@ -126,6 +147,41 @@ func (q *Queries) MoneybirdImport(ctx context.Context, administrationID int64) (
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const moneybirdImportPartials = `-- name: MoneybirdImportPartials :many
+SELECT source_id, message FROM moneybird_import_problems WHERE administration_id = $1 AND kind = $2 AND partial
+`
+
+type MoneybirdImportPartialsParams struct {
+	AdministrationID int64
+	Kind             string
+}
+
+type MoneybirdImportPartialsRow struct {
+	SourceID int64
+	Message  string
+}
+
+// What the records of a kind came in without.
+func (q *Queries) MoneybirdImportPartials(ctx context.Context, arg MoneybirdImportPartialsParams) ([]MoneybirdImportPartialsRow, error) {
+	rows, err := q.db.Query(ctx, moneybirdImportPartials, arg.AdministrationID, arg.Kind)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []MoneybirdImportPartialsRow
+	for rows.Next() {
+		var i MoneybirdImportPartialsRow
+		if err := rows.Scan(&i.SourceID, &i.Message); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const moneybirdImportProblems = `-- name: MoneybirdImportProblems :many

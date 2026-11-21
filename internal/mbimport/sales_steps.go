@@ -248,14 +248,14 @@ func (r *run) salesInvoices(ctx context.Context) error {
 			_, err := r.s.targets.Sales.AddAttachment(ctx, r.job.AdministrationID, got.ID, r.job.UserID, name, contentType, data)
 			return err
 		}
-		if err := r.attach(ctx, st, "sales_invoices", got.ID, inv.Attachments, add); err != nil {
+		if err := r.attach(ctx, st, kindSalesInvoice, "sales_invoices", got.ID, inv.Attachments, add); err != nil {
 			return 0, err
 		}
 		if err := r.notes(ctx, st, sales.EntityType, got.ID, inv.Notes); err != nil {
 			return 0, err
 		}
 		if inv.sent() && deref(inv.InvoiceID) != "" {
-			if err := r.keepPDF(ctx, st, fmt.Sprintf("sales_invoices/%d/download_pdf", got.ID), fileName(deref(inv.InvoiceID))+" (Moneybird).pdf", add); err != nil {
+			if err := r.keepPDF(ctx, st, kindSalesInvoice, inv.ID.id(), fmt.Sprintf("sales_invoices/%d/download_pdf", got.ID), fileName(deref(inv.InvoiceID))+" (Moneybird).pdf", add); err != nil {
 				return 0, err
 			}
 		}
@@ -293,7 +293,7 @@ func (r *run) externalInvoices(ctx context.Context) error {
 			return 0, err
 		}
 		st := r.job.Step(StepExternalInvoices)
-		err = r.attach(ctx, st, "external_sales_invoices", got.ID, e.Attachments, func(ctx context.Context, name, contentType string, data []byte) error {
+		err = r.attach(ctx, st, kindExternalInvoice, "external_sales_invoices", got.ID, e.Attachments, func(ctx context.Context, name, contentType string, data []byte) error {
 			_, err := r.s.targets.Sales.AddExternalAttachment(ctx, r.job.AdministrationID, got.ID, r.job.UserID, name, contentType, data)
 			return err
 		})

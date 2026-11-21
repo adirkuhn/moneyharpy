@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"slices"
 	"strings"
+	"sync/atomic"
 	"testing"
 )
 
@@ -48,7 +49,8 @@ func newFakeMoneybird(t *testing.T) *httptest.Server {
 		"documents/purchase_invoices": {
 			"504000000000000161": `{"id":"504000000000000161","contact_id":"504000000000000501","reference":"PUR-77","date":"2026-02-01","due_date":"2026-02-15","entry_number":5,"currency":"EUR","prices_are_incl_tax":false,
 				"details":[{"id":"504000000000000162","description":"Paper","amount":"1","price":"100","tax_rate_id":"504000000000000912","ledger_account_id":"504000000000000904"}],
-				"payments":[{"id":"504000000000000163","payment_date":"2026-02-10","price":"121.0","price_base":"121.0","financial_account_id":"504000000000000201","financial_mutation_id":"504000000000000303"}],"attachments":[]}`,
+				"payments":[{"id":"504000000000000163","payment_date":"2026-02-10","price":"121.0","price_base":"121.0","financial_account_id":"504000000000000201","financial_mutation_id":"504000000000000303"}],
+				"attachments":[{"id":"504000000000000164","filename":"email.eml","content_type":"message/rfc822"}]}`,
 		},
 		"documents/receipts": {},
 		"documents/general_documents": {
@@ -104,6 +106,7 @@ func newFakeMoneybird(t *testing.T) *httptest.Server {
 		}
 		_, _ = w.Write([]byte("[" + strings.Join(out, ",") + "]"))
 	}
+	var emailFailed atomic.Bool
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("RateLimit-RequestsRemaining", "140")
 		if strings.HasPrefix(r.URL.Path, "/signed/") {
@@ -125,6 +128,16 @@ func newFakeMoneybird(t *testing.T) *httptest.Server {
 		switch {
 		case strings.HasSuffix(path, "/download_pdf"):
 			http.Redirect(w, r, "/signed/document.pdf", http.StatusFound)
+			return
+		case strings.HasSuffix(path, "/download") && strings.Contains(path, "/attachments/504000000000000164/"):
+			// The email a purchase invoice came with fails once, as Moneybird sometimes does.
+			if emailFailed.CompareAndSwap(false, true) {
+				w.WriteHeader(http.StatusInternalServerError)
+				_, _ = w.Write([]byte(`{"error":"Something went wrong"}`))
+				return
+			}
+			w.Header().Set("Content-Type", "message/rfc822")
+			_, _ = w.Write([]byte("From: Jan Voorbeeld <jan@example.com>\r\nSubject: PUR-77\r\n\r\nSee attached.\r\n"))
 			return
 		case strings.HasSuffix(path, "/download") && strings.Contains(path, "/attachments/"):
 			if strings.Contains(path, "typeless") {

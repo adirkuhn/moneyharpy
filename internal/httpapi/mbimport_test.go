@@ -226,9 +226,21 @@ func TestImportFromMoneybird(t *testing.T) {
 	}
 
 	// Again, only what is new would come in; another Moneybird administration cannot mix in.
+	if !strings.Contains(text, "file email.eml left out") {
+		t.Errorf("no note of the email left out: %s", text)
+	}
 	wantStatus(t, owner.do(http.MethodPost, api+"/moneybird_import", start), http.StatusCreated)
 	other := map[string]any{"moneybird_import": map[string]any{"token": moneybirdToken, "administration_id": "456"}}
 	_ = h.mbimport.Work(context.Background())
+	// What a record came in without comes in on importing again, and its note is gone.
+	mended := decode[map[string]any](t, owner.do(http.MethodGet, api+"/documents/purchase_invoices/504000000000000161", nil))
+	if !strings.Contains(fmt.Sprint(mended["attachments"]), "email.eml") {
+		t.Errorf("purchase invoice files = %v", mended["attachments"])
+	}
+	after := fmt.Sprint(decode[[]httpapi.MoneybirdImportProblem](t, owner.do(http.MethodGet, api+"/moneybird_import/problems?per_page=100", nil)))
+	if strings.Contains(after, "email.eml") || !strings.Contains(after, "504000000000000504") {
+		t.Errorf("problems after importing again = %s", after)
+	}
 	wantStatus(t, owner.do(http.MethodPost, api+"/moneybird_import", other), http.StatusUnprocessableEntity)
 
 	// Importing again needs no token while one is kept; once forgotten it does.
