@@ -845,10 +845,10 @@ func TestAResumedStepKeepsCountingWhatItImported(t *testing.T) {
 }
 
 func TestAPriceComesInAsAnAmount(t *testing.T) {
-	// Moneybird returns up to six decimals, such as 8.985 or 345.12785.
+	// Moneybird returns up to six decimals, such as 2.345 or 123.45678.
 	for in, want := range map[mbDecimal]string{
 		"12.5": "12.5", "12.5000": "12.5", "-3.10": "-3.1", "1.0E2": "100.0",
-		"8.985": "8.985", "345.12785": "345.12785", "0.0825": "0.0825", "1.5E-3": "0.0015",
+		"2.345": "2.345", "123.45678": "123.45678", "0.0825": "0.0825", "1.5E-3": "0.0015",
 	} {
 		got, err := price(in, 2)
 		if err != nil || got != want {

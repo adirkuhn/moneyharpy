@@ -49,7 +49,7 @@ var dropped = []string{"description", "example", "examples", "unevaluatedPropert
 // corrections are the few places where Moneybird's API returns what its
 // spec says it does not, per schema, property and keyword. Each says why.
 var corrections = map[string]map[string]map[string]any{
-	// A line's price has up to six decimals, such as 8.985 or 0.0825 per
+	// A line's price has up to six decimals, such as 2.345 or 0.0825 per
 	// kWh: Moneybird returns them so, though its spec allows two.
 	"detail_response": {"price": {"pattern": `^-?\d+\.\d{1,6}$`}},
 }
