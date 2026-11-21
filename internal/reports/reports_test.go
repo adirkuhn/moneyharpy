@@ -150,6 +150,22 @@ func TestWorkingCapitalAndCashFlow(t *testing.T) {
 	}
 }
 
+func TestWorkingCapitalCountsACreditOnCurrentAssetsAsToPay(t *testing.T) {
+	// Moneybird shows a current asset that comes to a credit, such as the
+	// transactions still to be classified, with what is to be paid.
+	f := books()
+	toClassify := resource.ID(17)
+	f.store.accounts = append(f.store.accounts, Account{ID: toClassify, Code: "1440", Name: "Transactions to be classified", Type: CurrentAssets, Active: true})
+	f.post("FinancialMutation", "2025-06-12", nil, nil, bank, 5000, toClassify, -5000)
+	w, err := f.WorkingCapital(ctx, adminID, owner, "202506", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if w.Bank != 17200 || w.ToReceive != 24200 || w.ToPay != 18300 || w.Amount != 23100 {
+		t.Errorf("working capital = %+v", w)
+	}
+}
+
 func TestTax(t *testing.T) {
 	f := books()
 	f.store.tax = []TaxSum{

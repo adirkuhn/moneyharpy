@@ -83,7 +83,7 @@ func TestJournalPostsBankAndJournalEntries(t *testing.T) {
 		sums[s.LedgerAccountID] = s
 		total += s.Debit - s.Credit
 	}
-	unprocessed := categoryByKey(t, books, admin, owner, "unprocessed_transactions")
+	unprocessed := categoryByKey(t, books, admin, owner, "transactions_to_classify")
 	if total != 0 {
 		t.Errorf("journal does not balance: %s", total)
 	}
