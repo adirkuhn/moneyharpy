@@ -282,7 +282,7 @@ func (s *Service) CreateDocument(ctx context.Context, admin, user resource.ID, c
 	}
 	now := s.now()
 	d := Document{ID: s.ids.Next(), AdministrationID: admin, CreatedAt: now, UpdatedAt: now}
-	if err := s.apply(ctx, admin, user, &d, c, nil); err != nil {
+	if err := s.apply(ctx, admin, user, &d, c, nil, false); err != nil {
 		return Document{}, err
 	}
 	if err := s.documents.CreateDocument(ctx, d); err != nil {
@@ -298,7 +298,7 @@ func (s *Service) UpdateDocument(ctx context.Context, admin, id, user resource.I
 		return Document{}, err
 	}
 	was := d.Date
-	if err := s.apply(ctx, admin, user, &d, c, &was); err != nil {
+	if err := s.apply(ctx, admin, user, &d, c, &was, false); err != nil {
 		return Document{}, err
 	}
 	d.UpdatedAt = s.now()
@@ -399,7 +399,10 @@ func (s *Service) checkUnlocked(ctx context.Context, admin, user resource.ID, da
 
 const rowsField = "general_journal_document_entries_attributes"
 
-func (s *Service) apply(ctx context.Context, admin, user resource.ID, d *Document, c DocumentChanges, was *time.Time) error {
+// apply checks and takes the changes. An imported entry comes in as the
+// source has it, without reference or rows, as Moneybird keeps one, so long
+// as it balances.
+func (s *Service) apply(ctx context.Context, admin, user resource.ID, d *Document, c DocumentChanges, was *time.Time, imported bool) error {
 	var verr resource.ValidationError
 	if c.Reference != nil {
 		d.Reference = strings.TrimSpace(*c.Reference)
@@ -416,7 +419,7 @@ func (s *Service) apply(ctx context.Context, admin, user resource.ID, d *Documen
 		}
 	}
 	switch {
-	case d.Reference == "":
+	case d.Reference == "" && !imported:
 		verr.Add("reference", "can't be blank")
 	case len(d.Reference) > 255:
 		verr.Add("reference", "is too long (maximum is 255 characters)")
@@ -430,7 +433,7 @@ func (s *Service) apply(ctx context.Context, admin, user resource.ID, d *Documen
 	if c.Rows != nil {
 		s.applyRows(ctx, admin, user, d, c.Rows, &verr)
 	}
-	if len(d.Rows) == 0 {
+	if len(d.Rows) == 0 && !imported {
 		verr.Add(rowsField, "needs at least two rows")
 	}
 	if err := verr.OrNil(); err != nil {

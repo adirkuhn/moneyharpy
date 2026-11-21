@@ -319,6 +319,28 @@ func TestJournalEntryMustBalance(t *testing.T) {
 	}
 }
 
+func TestAnEmptyImportedJournalEntryComesInAsMoneybirdHasIt(t *testing.T) {
+	// Moneybird keeps a journal entry without rows or reference, which books nothing.
+	s, docs, _ := newService()
+	ctx := context.Background()
+	o := resource.Origin{ID: 4711}
+	d, err := s.Import(ctx, adminID, owner, o, DocumentChanges{Date: ptr("2026-11-01")}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if d.ID != 4711 || len(d.Rows) != 0 || d.Reference != "" || len(docs.docs) != 1 {
+		t.Errorf("entry %+v", d)
+	}
+	// One that does not balance stays out, imported or not.
+	if _, err := s.Import(ctx, adminID, owner, resource.Origin{ID: 4712}, DocumentChanges{Date: ptr("2026-11-01"), Rows: rows(rent, "100", "", bank, "", "90")}, nil); err == nil {
+		t.Error("an unbalanced entry came in")
+	}
+	// Made here, an entry still needs its reference and rows.
+	if _, err := s.CreateDocument(ctx, adminID, owner, DocumentChanges{Date: ptr("2026-11-01")}); err == nil {
+		t.Error("an empty entry was made")
+	}
+}
+
 func TestJournalEntryChecksRows(t *testing.T) {
 	s, _, _ := newService()
 	in := rows(debtors, "10", "", closed, "", "10", resource.ID(1), "5", "5")
