@@ -1732,6 +1732,7 @@ const (
 	MoneybirdImportStepKindTaskLists               MoneybirdImportStepKind = "task_lists"
 	MoneybirdImportStepKindTimeEntries             MoneybirdImportStepKind = "time_entries"
 	MoneybirdImportStepKindTypelessDocuments       MoneybirdImportStepKind = "typeless_documents"
+	MoneybirdImportStepKindVatBalances             MoneybirdImportStepKind = "vat_balances"
 	MoneybirdImportStepKindWorkflows               MoneybirdImportStepKind = "workflows"
 )
 
@@ -1783,6 +1784,8 @@ func (e MoneybirdImportStepKind) Valid() bool {
 	case MoneybirdImportStepKindTimeEntries:
 		return true
 	case MoneybirdImportStepKindTypelessDocuments:
+		return true
+	case MoneybirdImportStepKindVatBalances:
 		return true
 	case MoneybirdImportStepKindWorkflows:
 		return true

@@ -33,3 +33,22 @@ func (s *Service) Import(ctx context.Context, admin, user resource.ID, o resourc
 	}
 	return d, nil
 }
+
+// ImportCorrection books an entry an import makes to have the books as the
+// source has them, such as for what the source booked that cannot come in.
+// Like the rest of an import it takes the locked period as the source has
+// it.
+func (s *Service) ImportCorrection(ctx context.Context, admin, user resource.ID, c DocumentChanges) (Document, error) {
+	if _, err := s.admins.Get(ctx, admin, user); err != nil {
+		return Document{}, err
+	}
+	now := s.now()
+	d := Document{ID: s.ids.Next(), AdministrationID: admin, CreatedAt: now, UpdatedAt: now}
+	if err := s.apply(ctx, admin, user, &d, c, nil, true); err != nil {
+		return Document{}, err
+	}
+	if err := s.documents.CreateDocument(ctx, d); err != nil {
+		return Document{}, fmt.Errorf("store journal entry: %w", err)
+	}
+	return d, nil
+}

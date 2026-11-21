@@ -188,6 +188,8 @@ type Store interface {
 	// Entries returns every entry in the period by date and document.
 	Entries(ctx context.Context, admin resource.ID, p money.Period) ([]journal.Entry, error)
 	Contacts(ctx context.Context, admin resource.ID, ids []resource.ID) ([]Contact, error)
+	// FirstDay is the date of the first entry, if any.
+	FirstDay(ctx context.Context, admin resource.ID) (time.Time, bool, error)
 }
 
 // Administrations checks access to an administration.

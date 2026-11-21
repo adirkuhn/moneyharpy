@@ -89,6 +89,9 @@ const (
 	// StepAssets comes after the documents and journal entries its assets
 	// were bought with.
 	StepAssets = "assets"
+	// StepVAT has the VAT as Moneybird has it after its VAT returns, which
+	// its API does not give.
+	StepVAT = "vat_balances"
 	// StepTimeEntries comes after the invoices the time was billed on.
 	StepTimeEntries   = "time_entries"
 	StepTaskTemplates = "task_list_templates"
@@ -101,7 +104,7 @@ const (
 // Steps lists the steps an import takes.
 var Steps = []string{
 	StepChart, StepCustomFields, StepIdentities, StepWorkflows, StepContacts, StepProducts, StepProjects, StepFinancialAccounts, StepFinancialMutations, StepEstimates, StepRecurring,
-	StepSalesInvoices, StepExternalInvoices, StepPurchaseInvoices, StepReceipts, StepPaymentLinks, StepGeneralDocuments, StepTypelessDocuments, StepJournal, StepAssets,
+	StepSalesInvoices, StepExternalInvoices, StepPurchaseInvoices, StepReceipts, StepPaymentLinks, StepGeneralDocuments, StepTypelessDocuments, StepJournal, StepAssets, StepVAT,
 	StepTimeEntries, StepTaskTemplates, StepTaskLists, StepLockedPeriod,
 }
 

@@ -197,6 +197,18 @@ func (q *Queries) ReportContacts(ctx context.Context, arg ReportContactsParams) 
 	return items, nil
 }
 
+const reportFirstDay = `-- name: ReportFirstDay :one
+SELECT min(e.date)::date AS first_day FROM ledger_entries e WHERE e.administration_id = $1
+`
+
+// The date of the first entry, if any.
+func (q *Queries) ReportFirstDay(ctx context.Context, administrationID int64) (pgtype.Date, error) {
+	row := q.db.QueryRow(ctx, reportFirstDay, administrationID)
+	var first_day pgtype.Date
+	err := row.Scan(&first_day)
+	return first_day, err
+}
+
 const reportLedgerAccountEntries = `-- name: ReportLedgerAccountEntries :many
 SELECT e.id, e.administration_id, e.document_type, e.document_id, e.date, e.ledger_account_id, e.contact_id, e.project_id,
        e.tax_rate_id, e.financial_account_id, e.amount, e.description, e.row_order, count(*) OVER () AS total

@@ -69,7 +69,14 @@ func (r *run) linkPayment(ctx context.Context, st *Step, m mbMutation, p mbMutat
 	if err != nil {
 		return r.fail(ctx, st, kindFinancialMutation, mutation, fmt.Errorf("payment of %s %d: price: is not an amount: %q", p.InvoiceType, p.InvoiceID.id(), string(p.Price)))
 	}
-	linked, err := r.s.targets.Banking.LinkImportedPayment(ctx, r.job.AdministrationID, r.job.UserID, mutation, p.InvoiceType, p.InvoiceID.id(), price)
+	var linked bool
+	if p.InvoiceType == vatDocument {
+		// A VAT return cannot come in: what paid it is booked where the
+		// return would have it.
+		linked, err = r.bookVATPayment(ctx, mutation, price)
+	} else {
+		linked, err = r.s.targets.Banking.LinkImportedPayment(ctx, r.job.AdministrationID, r.job.UserID, mutation, p.InvoiceType, p.InvoiceID.id(), price)
+	}
 	switch {
 	case errors.Is(err, banking.ErrBookingNotFound):
 		return r.fail(ctx, st, kindFinancialMutation, mutation, errors.New(missing))
@@ -115,4 +122,18 @@ func (r *run) passed(ctx context.Context, step, kind string, id resource.ID, err
 		return err
 	}
 	return r.s.store.RecordProblem(ctx, r.job.AdministrationID, Problem{Step: step, Kind: kind, SourceID: id, Message: describe(err), CreatedAt: r.s.now()})
+}
+
+// vatDocument is Moneybird's invoice type of a VAT return.
+const vatDocument = "VatDocument"
+
+func (r *run) bookVATPayment(ctx context.Context, mutation resource.ID, price money.Amount) (bool, error) {
+	ledger, err := r.s.targets.Books.SystemLedgerAccount(ctx, r.job.AdministrationID, r.job.UserID, "vat_paid_or_received")
+	if err != nil {
+		return false, err
+	}
+	if price < 0 {
+		price = -price
+	}
+	return r.s.targets.Banking.BookImported(ctx, r.job.AdministrationID, r.job.UserID, mutation, ledger, price)
 }
