@@ -192,6 +192,8 @@ func (plainSecrets) Open(s string) (string, error) { return strings.TrimPrefix(s
 // fakeTargets take in records as the services would, refusing a contact
 // without a name to show a record the import passes.
 type fakeTargets struct {
+	// takenNumbers are customer numbers other contacts here have.
+	takenNumbers []string
 	chart    bookkeeping.ChartImport
 	contacts map[resource.ID]contacts.Changes
 	people   map[resource.ID][]contacts.ImportedPerson
@@ -223,8 +225,17 @@ func (f *fakeTargets) Import(_ context.Context, _, _ resource.ID, o resource.Ori
 		verr.Add("company_name", "can't be blank")
 		return contacts.Contact{}, verr.OrNil()
 	}
+	number := "99"
+	if c.CustomerID != nil {
+		number = *c.CustomerID
+		if slices.Contains(f.takenNumbers, number) {
+			var verr resource.ValidationError
+			verr.Add("customer_id", "has already been taken")
+			return contacts.Contact{}, verr.OrNil()
+		}
+	}
 	f.contacts[o.ID], f.people[o.ID] = c, people
-	return contacts.Contact{ID: o.ID}, nil
+	return contacts.Contact{ID: o.ID, CustomerID: number}, nil
 }
 
 type productTarget struct{ f *fakeTargets }
@@ -535,6 +546,29 @@ func TestADuplicateRecordIsAProblemNotAStop(t *testing.T) {
 	}
 	if isRecordProblem(fmt.Errorf("store contact: %w", pgError{"57P01"})) {
 		t.Error("a database shutting down counts as a record's problem")
+	}
+}
+
+func TestAContactWhoseNumberIsTakenComesInWithTheNext(t *testing.T) {
+	s, store, mb, f := setup()
+	ctx := context.Background()
+	mb.records["contacts"] = []string{`{"id":"503","company_name":"Beispiel GmbH","customer_id":"7"}`}
+	f.takenNumbers = []string{"7"}
+	if _, err := s.Start(ctx, adminID, owner, "good", source); err != nil {
+		t.Fatal(err)
+	}
+	_ = s.Work(ctx)
+	c, ok := f.contacts[503]
+	if !ok || c.CustomerID != nil {
+		t.Fatalf("contact %+v, in %v", c, ok)
+	}
+	if st := store.job.Step(StepContacts); st.Imported != 1 || st.Failed != 0 {
+		t.Errorf("contacts step %+v", st)
+	}
+	if !slices.ContainsFunc(store.problems, func(p Problem) bool {
+		return p.SourceID == 503 && p.Partial && p.Message == "came in as customer 99, as customer 7 is another contact here"
+	}) {
+		t.Errorf("problems %+v", store.problems)
 	}
 }
 

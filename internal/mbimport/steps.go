@@ -271,6 +271,16 @@ func (r *run) contacts(ctx context.Context) error {
 		}
 		changes.SendInvoicesToEmail, changes.SendEstimatesToEmail = emailList(changes.SendInvoicesToEmail), emailList(changes.SendEstimatesToEmail)
 		got, err := r.s.targets.Contacts.Import(ctx, r.job.AdministrationID, r.job.UserID, c.origin(), changes, c.people())
+		if taken := changes.CustomerID; taken != nil && onlyField(err, "customer_id") {
+			// Another contact here has its number: it takes the next one, which is noted.
+			changes.CustomerID = nil
+			if got, err = r.s.targets.Contacts.Import(ctx, r.job.AdministrationID, r.job.UserID, c.origin(), changes, c.people()); err == nil {
+				msg := fmt.Sprintf("came in as customer %s, as customer %s is another contact here", got.CustomerID, *taken)
+				if err := r.partial(ctx, r.job.Step(StepContacts), kindContact, c.ID.id(), msg); err != nil {
+					return 0, err
+				}
+			}
+		}
 		if left := optionalOnly(err, contactOptional); left != nil {
 			// The contact comes in without what does not pass, which is noted with why.
 			why := describe(err)
@@ -506,6 +516,12 @@ func optionalOnly(err error, optional []string) []string {
 		}
 	}
 	return fields
+}
+
+// onlyField tells a validation error about that one field alone.
+func onlyField(err error, field string) bool {
+	var verr *resource.ValidationError
+	return errors.As(err, &verr) && len(verr.Fields) == 1 && len(verr.Fields[field]) > 0
 }
 
 // clearContactField leaves a field out of a contact, with what depends on it.
