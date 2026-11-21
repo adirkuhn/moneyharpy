@@ -178,6 +178,22 @@ func (r *run) purchases(ctx context.Context, step, path, kind string) error {
 	if kind == purchases.Receipt {
 		idKind = kindReceipt
 	}
+	// One Moneybird has not processed yet is not booked here either, even
+	// when it came in booked before.
+	if r.revisit == nil {
+		r.revisit = map[string]func(context.Context, json.RawMessage) error{}
+	}
+	r.revisit[idKind] = func(ctx context.Context, raw json.RawMessage) error {
+		var d mbPurchase
+		if err := json.Unmarshal(raw, &d); err != nil || d.State != "new" {
+			return nil
+		}
+		_, err := r.s.targets.Purchases.ImportedNew(ctx, r.job.AdministrationID, r.job.UserID, kind, d.ID.id())
+		if isRecordProblem(err) {
+			return nil
+		}
+		return err
+	}
 	return r.synced(ctx, step, path, idKind, everything, func(ctx context.Context, raw json.RawMessage) (resource.ID, error) {
 		var d mbPurchase
 		if err := json.Unmarshal(raw, &d); err != nil {
@@ -192,7 +208,7 @@ func (r *run) purchases(ctx context.Context, step, path, kind string) error {
 			return 0, err
 		}
 		in := purchases.ImportedDocument{
-			Origin: origin(d.ID, d.stamps), Kind: kind, Details: details, Payments: payments,
+			Origin: origin(d.ID, d.stamps), Kind: kind, Details: details, Payments: payments, New: d.State == "new",
 			Changes: purchases.Changes{
 				ContactID: ref(d.ContactID), Reference: opt(d.Reference), Date: opt(d.Date), DueDate: opt(d.DueDate), Currency: opt(d.Currency),
 				PricesAreInclTax: d.PricesAreInclTax, RevenueInvoice: d.RevenueInvoice,

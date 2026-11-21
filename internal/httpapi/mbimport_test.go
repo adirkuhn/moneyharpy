@@ -36,7 +36,7 @@ func TestImportFromMoneybird(t *testing.T) {
 		t.Error("the token is shown")
 	}
 	started := decode[httpapi.MoneybirdImport](t, r)
-	if started.State != "running" || len(started.Steps) != 22 {
+	if started.State != "running" || len(started.Steps) != 23 {
 		t.Errorf("started = %+v", started)
 	}
 	if err := h.mbimport.Work(context.Background()); err != nil {
@@ -156,6 +156,16 @@ func TestImportFromMoneybird(t *testing.T) {
 	recurring := decode[map[string]any](t, owner.do(http.MethodGet, api+"/recurring_sales_invoices/504000000000000151", nil))
 	if recurring["active"] != false || recurring["auto_send"] != false {
 		t.Errorf("recurring = %+v", recurring)
+	}
+	// A payment Moneybird has on a transaction, not on its invoice, is linked to it as there.
+	linkedMutation := decode[map[string]any](t, owner.do(http.MethodGet, api+"/financial_mutations/504000000000000304", nil))
+	if linkedMutation["state"] != "processed" || !strings.Contains(fmt.Sprint(linkedMutation["payments"]), "504000000000000165") {
+		t.Errorf("transaction = %+v", linkedMutation)
+	}
+	// A purchase invoice Moneybird has not processed yet comes in so, booking nothing.
+	unprocessed := decode[map[string]any](t, owner.do(http.MethodGet, api+"/documents/purchase_invoices/504000000000000166", nil))
+	if unprocessed["state"] != "new" {
+		t.Errorf("new purchase invoice = %+v", unprocessed["state"])
 	}
 	// The purchase invoice is paid with its transaction; the rent is booked on its category.
 	purchase := decode[map[string]any](t, owner.do(http.MethodGet, api+"/documents/purchase_invoices/504000000000000161", nil))

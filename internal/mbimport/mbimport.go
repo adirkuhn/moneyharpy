@@ -74,12 +74,15 @@ const (
 	StepFinancialAccounts  = "financial_accounts"
 	StepFinancialMutations = "financial_mutations"
 	// StepEstimates and StepRecurring come before the invoices made from them.
-	StepEstimates         = "estimates"
-	StepRecurring         = "recurring_sales_invoices"
-	StepSalesInvoices     = "sales_invoices"
-	StepExternalInvoices  = "external_sales_invoices"
-	StepPurchaseInvoices  = "purchase_invoices"
-	StepReceipts          = "receipts"
+	StepEstimates        = "estimates"
+	StepRecurring        = "recurring_sales_invoices"
+	StepSalesInvoices    = "sales_invoices"
+	StepExternalInvoices = "external_sales_invoices"
+	StepPurchaseInvoices = "purchase_invoices"
+	StepReceipts         = "receipts"
+	// StepPaymentLinks links the payments that came in on invoices before
+	// their transactions did to those transactions.
+	StepPaymentLinks      = "payment_links"
 	StepGeneralDocuments  = "general_documents"
 	StepTypelessDocuments = "typeless_documents"
 	StepJournal           = "general_journal_documents"
@@ -95,7 +98,7 @@ const (
 // Steps lists the steps an import takes.
 var Steps = []string{
 	StepChart, StepCustomFields, StepIdentities, StepWorkflows, StepContacts, StepProducts, StepProjects, StepFinancialAccounts, StepFinancialMutations, StepEstimates, StepRecurring,
-	StepSalesInvoices, StepExternalInvoices, StepPurchaseInvoices, StepReceipts, StepGeneralDocuments, StepTypelessDocuments, StepJournal,
+	StepSalesInvoices, StepExternalInvoices, StepPurchaseInvoices, StepReceipts, StepPaymentLinks, StepGeneralDocuments, StepTypelessDocuments, StepJournal,
 	StepTimeEntries, StepTaskTemplates, StepTaskLists, StepLockedPeriod,
 }
 

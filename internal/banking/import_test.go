@@ -2,6 +2,7 @@ package banking
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -67,5 +68,37 @@ func TestImportStatementKeepsTheTransactionsAsTheyWere(t *testing.T) {
 	}
 	if st := store.statements[9401]; !st.CreatedAt.Equal(created) || st.Reference != "Imported from Moneybird" {
 		t.Errorf("statement %+v", st)
+	}
+}
+
+func TestAnImportedPaymentIsLinkedToItsTransactionAfterwards(t *testing.T) {
+	// The invoice came in paid before its transaction did: its payment is
+	// linked once the transaction is here, as it is in the source.
+	s, store, _ := newTestService()
+	ctx := context.Background()
+	if _, err := s.ImportAccount(ctx, adminID, owner, ImportedAccount{Origin: resource.Origin{ID: 9201}, Changes: AccountChanges{Name: ptr("Business account")}}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.ImportStatement(ctx, adminID, owner, ImportedStatement{Origin: resource.Origin{ID: 9401}, AccountID: 9201, Mutations: []ImportedMutation{
+		{Origin: resource.Origin{ID: 9501}, Input: MutationInput{Date: ptr("2026-09-10"), Message: ptr("Paper"), Amount: ptr("-36.28")}},
+	}}); err != nil {
+		t.Fatal(err)
+	}
+	store.loose = []PaymentLink{{ID: 7001, InvoiceType: DocumentType, InvoiceID: 8001, Price: 3628}}
+	linked, err := s.LinkImportedPayment(ctx, adminID, owner, 9501, DocumentType, 8001, 3628)
+	if err != nil || !linked {
+		t.Fatalf("linked %v, %v", linked, err)
+	}
+	m := store.mutations[9501]
+	if m.State != Processed || len(m.Payments) != 1 || m.Payments[0].ID != 7001 || len(store.loose) != 0 {
+		t.Errorf("transaction %+v, loose %+v", m, store.loose)
+	}
+	// Linked already: nothing changes.
+	if linked, err := s.LinkImportedPayment(ctx, adminID, owner, 9501, DocumentType, 8001, 3628); err != nil || linked {
+		t.Errorf("again %v, %v", linked, err)
+	}
+	// No such payment here.
+	if _, err := s.LinkImportedPayment(ctx, adminID, owner, 9501, DocumentType, 8002, 100); !errors.Is(err, ErrBookingNotFound) {
+		t.Errorf("unknown payment: %v", err)
 	}
 }

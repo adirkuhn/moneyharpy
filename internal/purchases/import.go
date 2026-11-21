@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/adirkuhn/moneyharpy/internal/administration"
+	"github.com/adirkuhn/moneyharpy/internal/journal"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/sales"
 )
@@ -17,6 +19,9 @@ type ImportedDocument struct {
 	Details     []sales.ImportedDetail
 	EntryNumber int
 	Payments    []sales.ImportedPayment
+	// New keeps the document as the source has it before processing it:
+	// filled in, but not booked, as Moneybird keeps a new document.
+	New bool
 }
 
 // Import adds a purchase invoice or receipt brought in from another
@@ -61,6 +66,12 @@ func (s *Service) Import(ctx context.Context, admin, user resource.ID, in Import
 			d.Lines[i].CreatedAt, d.Lines[i].UpdatedAt = in.Details[i].Origin.Or(created)
 		}
 	}
+	if in.New {
+		if err := s.keepNew(ctx, a, user, &d, true); err != nil {
+			return Document{}, err
+		}
+		return s.store.Document(ctx, admin, in.Kind, d.ID)
+	}
 	if err := s.save(ctx, a, user, &d, true); err != nil {
 		return Document{}, err
 	}
@@ -70,6 +81,38 @@ func (s *Service) Import(ctx context.Context, admin, user resource.ID, in Import
 		}
 	}
 	return s.store.Document(ctx, admin, in.Kind, d.ID)
+}
+
+// ImportedNew takes back the booking of an imported document the source
+// keeps as new, not processed yet, as long as nothing paid it. It reports
+// whether the document changed.
+func (s *Service) ImportedNew(ctx context.Context, admin, user resource.ID, kind string, id resource.ID) (bool, error) {
+	a, err := s.admins.Get(ctx, admin, user)
+	if err != nil {
+		return false, err
+	}
+	d, err := s.store.Document(ctx, admin, kind, id)
+	if err != nil {
+		return false, err
+	}
+	if d.State == New || d.State == Paid || len(d.Payments) > 0 {
+		return false, nil
+	}
+	d.UpdatedAt = s.now()
+	return true, s.keepNew(ctx, a, user, &d, false)
+}
+
+// keepNew stores a document as new with its totals, booking nothing and
+// taking back what it booked.
+func (s *Service) keepNew(ctx context.Context, a administration.Listed, user resource.ID, d *Document, created bool) error {
+	rates, err := s.rates(ctx, a.ID, user, *d)
+	if err != nil {
+		return err
+	}
+	d.Totals = computeTotals(*d, rates)
+	allocate(d, rates)
+	d.State = New
+	return wrap("store document", s.store.SaveDocument(ctx, *d, []journal.Entry{}, created))
 }
 
 // ImportTypeless adds a document without a type brought in from another

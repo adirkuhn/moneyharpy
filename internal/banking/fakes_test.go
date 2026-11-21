@@ -64,6 +64,20 @@ type memStore struct {
 	statements map[resource.ID]Statement
 	mutations  map[resource.ID]Mutation
 	rules      map[resource.ID]Rule
+	// loose are payments not linked to a transaction.
+	loose []PaymentLink
+}
+
+func (m *memStore) AttachPayment(_ context.Context, _ resource.ID, mutation resource.ID, invoiceType string, invoice resource.ID, price Amount) (bool, error) {
+	i := slices.IndexFunc(m.loose, func(p PaymentLink) bool { return p.InvoiceType == invoiceType && p.InvoiceID == invoice && p.Price == price })
+	if i < 0 {
+		return false, nil
+	}
+	mu := m.mutations[mutation]
+	mu.Payments = append(mu.Payments, m.loose[i])
+	m.mutations[mutation] = mu
+	m.loose = slices.Delete(m.loose, i, i+1)
+	return true, nil
 }
 
 func newMemStore() *memStore {

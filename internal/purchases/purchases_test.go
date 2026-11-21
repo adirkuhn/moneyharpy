@@ -89,6 +89,44 @@ func TestDocumentWithoutLinesIsNew(t *testing.T) {
 	}
 }
 
+func TestAnImportedNewDocumentStaysUnbooked(t *testing.T) {
+	// Moneybird keeps a document it has not processed yet as new, booking nothing.
+	h := newHarness(t)
+	c := invoice()
+	d, err := h.svc.Import(ctx, adminID, owner, ImportedDocument{
+		Origin: resource.Origin{ID: 9001}, Kind: PurchaseInvoice, Changes: c, New: true,
+		Details: []sales.ImportedDetail{{Input: line("50", vat21, costs)}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if d.State != New || len(h.store.entries[d.ID]) != 0 || d.Totals.InclTax == 0 {
+		t.Errorf("document = %+v, entries %v", d, h.store.entries[d.ID])
+	}
+}
+
+func TestAnImportedDocumentGoesBackToNewAsTheSourceHasIt(t *testing.T) {
+	h := newHarness(t)
+	d, err := h.svc.Import(ctx, adminID, owner, ImportedDocument{
+		Origin: resource.Origin{ID: 9002}, Kind: PurchaseInvoice, Changes: invoice(),
+		Details: []sales.ImportedDetail{{Input: line("50", vat21, costs)}},
+	})
+	if err != nil || d.State != Open || len(h.store.entries[d.ID]) == 0 {
+		t.Fatalf("document = %+v, %v", d, err)
+	}
+	changed, err := h.svc.ImportedNew(ctx, adminID, owner, PurchaseInvoice, d.ID)
+	if err != nil || !changed {
+		t.Fatalf("changed %v, %v", changed, err)
+	}
+	if got, _ := h.store.Document(ctx, adminID, PurchaseInvoice, d.ID); got.State != New || len(h.store.entries[d.ID]) != 0 {
+		t.Errorf("document = %+v, entries %v", got, h.store.entries[d.ID])
+	}
+	// Once new it stays so.
+	if changed, err := h.svc.ImportedNew(ctx, adminID, owner, PurchaseInvoice, d.ID); err != nil || changed {
+		t.Errorf("again: %v, %v", changed, err)
+	}
+}
+
 func TestReceiptNeedsNoSupplierAndLinesWithoutCategoryAreUncategorized(t *testing.T) {
 	h := newHarness(t)
 	rate := vat21

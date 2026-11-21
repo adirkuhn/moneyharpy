@@ -284,19 +284,27 @@ func (a mbFinancialAccount) changes() banking.AccountChanges {
 }
 
 type mbMutation struct {
-	ID                  mbID              `json:"id"`
-	FinancialAccountID  mbID              `json:"financial_account_id"`
-	FinancialStatement  mbID              `json:"financial_statement_id"`
-	Date                string            `json:"date"`
-	Message             *string           `json:"message"`
-	Amount              mbDecimal         `json:"amount"`
-	Code                *string           `json:"code"`
-	ContraAccountName   *string           `json:"contra_account_name"`
-	ContraAccountNumber *string           `json:"contra_account_number"`
-	BatchReference      *string           `json:"batch_reference"`
-	TransactionID       *string           `json:"account_servicer_transaction_id"`
-	Bookings            []mbLedgerBooking `json:"ledger_account_bookings"`
+	ID                  mbID                `json:"id"`
+	FinancialAccountID  mbID                `json:"financial_account_id"`
+	FinancialStatement  mbID                `json:"financial_statement_id"`
+	Date                string              `json:"date"`
+	Message             *string             `json:"message"`
+	Amount              mbDecimal           `json:"amount"`
+	Code                *string             `json:"code"`
+	ContraAccountName   *string             `json:"contra_account_name"`
+	ContraAccountNumber *string             `json:"contra_account_number"`
+	BatchReference      *string             `json:"batch_reference"`
+	TransactionID       *string             `json:"account_servicer_transaction_id"`
+	Bookings            []mbLedgerBooking   `json:"ledger_account_bookings"`
+	Payments            []mbMutationPayment `json:"payments"`
 	stamps
+}
+
+// mbMutationPayment is an invoice payment a transaction made.
+type mbMutationPayment struct {
+	InvoiceType string    `json:"invoice_type"`
+	InvoiceID   mbID      `json:"invoice_id"`
+	Price       mbDecimal `json:"price"`
 }
 
 func (m mbMutation) input() banking.MutationInput {
@@ -479,6 +487,9 @@ type mbPurchase struct {
 	Payments         []mbPayment    `json:"payments"`
 	Attachments      []mbAttachment `json:"attachments"`
 	Notes            []mbNote       `json:"notes"`
+	// State is new while Moneybird has not processed the document, which
+	// books nothing yet.
+	State string `json:"state"`
 	stamps
 }
 
