@@ -1720,6 +1720,7 @@ const (
 	MoneybirdImportStepKindGeneralJournalDocuments MoneybirdImportStepKind = "general_journal_documents"
 	MoneybirdImportStepKindIdentities              MoneybirdImportStepKind = "identities"
 	MoneybirdImportStepKindLockedPeriod            MoneybirdImportStepKind = "locked_period"
+	MoneybirdImportStepKindPaymentLinks            MoneybirdImportStepKind = "payment_links"
 	MoneybirdImportStepKindProducts                MoneybirdImportStepKind = "products"
 	MoneybirdImportStepKindProjects                MoneybirdImportStepKind = "projects"
 	MoneybirdImportStepKindPurchaseInvoices        MoneybirdImportStepKind = "purchase_invoices"
@@ -1757,6 +1758,8 @@ func (e MoneybirdImportStepKind) Valid() bool {
 	case MoneybirdImportStepKindIdentities:
 		return true
 	case MoneybirdImportStepKindLockedPeriod:
+		return true
+	case MoneybirdImportStepKindPaymentLinks:
 		return true
 	case MoneybirdImportStepKindProducts:
 		return true
