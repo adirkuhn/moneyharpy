@@ -262,7 +262,8 @@ describe('two-step verification', () => {
   it('asks for a code after the password and then signs in', async () => {
     let code = ''
     server.use(
-      signedOut(),
+      // Signed out until the code is in: whenever the app asks again, it is told how things are.
+      http.get('*/api/auth/me', () => (code ? HttpResponse.json({ ...user, two_factor_enabled: true }) : HttpResponse.json({ error: 'Authorization required' }, { status: 401 }))),
       listing([harpy]),
       http.get('*/api/auth/providers', () => HttpResponse.json({ google: false, registration_open: true, lm2: false, password_reset: false })),
       http.post('*/api/auth/login', () => HttpResponse.json({ two_factor_required: true }, { status: 202 })),

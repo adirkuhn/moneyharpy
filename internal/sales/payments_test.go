@@ -114,6 +114,29 @@ func TestImportedPaymentsComeInAsTheSourceHasThem(t *testing.T) {
 	}
 }
 
+func TestMissingPaymentsAreThoseNotHere(t *testing.T) {
+	day := time.Date(2026, 2, 19, 0, 0, 0, 0, time.UTC)
+	m1, m2, m3 := resource.ID(1), resource.ID(2), resource.ID(3)
+	here := []Payment{
+		{Price: 15000, PaymentDate: day, FinancialMutationID: &m2},
+		{Price: 1234, PaymentDate: day},
+	}
+	theirs := []ImportedPayment{
+		{Input: PaymentInput{PaymentDate: "2026-02-19", Price: ptr("150.00"), FinancialMutationID: &m1}},
+		{Input: PaymentInput{PaymentDate: "2026-02-19", Price: ptr("150.00"), FinancialMutationID: &m2}},
+		{Input: PaymentInput{PaymentDate: "2026-02-23", Price: ptr("-150.00"), FinancialMutationID: &m3}},
+		{Input: PaymentInput{PaymentDate: "2026-02-19", Price: ptr("12.34")}},
+	}
+	missing := MissingPayments(here, theirs)
+	if len(missing) != 2 || *missing[0].Input.FinancialMutationID != m1 || *missing[1].Input.FinancialMutationID != m3 {
+		t.Errorf("missing = %+v", missing)
+	}
+	// One waiting unlinked with its price stands for one linked there, which linking takes over.
+	if got := MissingPayments([]Payment{{Price: 15000, PaymentDate: day}}, theirs[:1]); len(got) != 0 {
+		t.Errorf("unlinked: %+v", got)
+	}
+}
+
 func TestRegisterPaymentValidates(t *testing.T) {
 	h := newHarness(t)
 	ctx := context.Background()

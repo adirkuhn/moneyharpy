@@ -81,9 +81,9 @@ func (s *Service) Import(ctx context.Context, admin, user resource.ID, in Import
 	return s.store.Document(ctx, admin, in.Kind, d.ID)
 }
 
-// ImportPayments brings in the payments of a document that came in before
-// without any, as the source has them. It reports whether it added them;
-// a document that has payments keeps them.
+// ImportPayments brings in the payments the source has on a document that
+// came in before that are not here, such as one refused then. It reports
+// whether it added any; the payments here stay.
 func (s *Service) ImportPayments(ctx context.Context, admin, user resource.ID, kind string, id resource.ID, payments []sales.ImportedPayment) (bool, error) {
 	if _, err := s.admins.Get(ctx, admin, user); err != nil {
 		return false, err
@@ -92,10 +92,11 @@ func (s *Service) ImportPayments(ctx context.Context, admin, user resource.ID, k
 	if err != nil {
 		return false, err
 	}
-	if len(d.Payments) > 0 || len(payments) == 0 || !d.Booked() {
+	missing := sales.MissingPayments(d.Payments, payments)
+	if len(missing) == 0 || !d.Booked() {
 		return false, nil
 	}
-	return true, s.importPayments(ctx, admin, user, kind, id, payments)
+	return true, s.importPayments(ctx, admin, user, kind, id, missing)
 }
 
 func (s *Service) importPayments(ctx context.Context, admin, user resource.ID, kind string, id resource.ID, payments []sales.ImportedPayment) error {

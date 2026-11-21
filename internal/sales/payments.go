@@ -178,7 +178,9 @@ func (s *Service) registerPayment(ctx context.Context, admin, user resource.ID, 
 			return Payment{}, err
 		}
 	}
-	if action == InvoicesSettlement {
+	// An imported settlement books its own side: the other invoice comes in
+	// with its own.
+	if action == InvoicesSettlement && !in.Imported {
 		if in.InvoiceID == nil {
 			return Payment{}, invalid("invoice_id", "can't be blank for an invoices settlement")
 		}

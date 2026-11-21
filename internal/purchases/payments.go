@@ -118,7 +118,9 @@ func (s *Service) registerPayment(ctx context.Context, admin, user resource.ID, 
 			return sales.Payment{}, err
 		}
 	}
-	if action == sales.InvoicesSettlement {
+	// An imported settlement books its own side: the other document comes
+	// in with its own.
+	if action == sales.InvoicesSettlement && !in.Imported {
 		return s.settle(ctx, a, user, d, in.InvoiceID, price, day)
 	}
 	p := s.newPayment(d, user, price, day)
