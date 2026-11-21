@@ -166,6 +166,23 @@ func (q *Queries) MoneybirdImportProblems(ctx context.Context, arg MoneybirdImpo
 	return items, nil
 }
 
+const moneybirdImportedAt = `-- name: MoneybirdImportedAt :one
+SELECT imported_at FROM moneybird_import_ids WHERE administration_id = $1 AND kind = $2 AND source_id = $3
+`
+
+type MoneybirdImportedAtParams struct {
+	AdministrationID int64
+	Kind             string
+	SourceID         int64
+}
+
+func (q *Queries) MoneybirdImportedAt(ctx context.Context, arg MoneybirdImportedAtParams) (pgtype.Timestamptz, error) {
+	row := q.db.QueryRow(ctx, moneybirdImportedAt, arg.AdministrationID, arg.Kind, arg.SourceID)
+	var imported_at pgtype.Timestamptz
+	err := row.Scan(&imported_at)
+	return imported_at, err
+}
+
 const moneybirdImportedID = `-- name: MoneybirdImportedID :one
 SELECT target_id FROM moneybird_import_ids WHERE administration_id = $1 AND kind = $2 AND source_id = $3
 `
@@ -213,7 +230,7 @@ func (q *Queries) RecordMoneybirdImportProblem(ctx context.Context, arg RecordMo
 }
 
 const recordMoneybirdImportedID = `-- name: RecordMoneybirdImportedID :exec
-INSERT INTO moneybird_import_ids (administration_id, kind, source_id, target_id) VALUES ($1, $2, $3, $4)
+INSERT INTO moneybird_import_ids (administration_id, kind, source_id, target_id, imported_at) VALUES ($1, $2, $3, $4, $5)
 ON CONFLICT (administration_id, kind, source_id) DO UPDATE SET target_id = excluded.target_id
 `
 
@@ -222,6 +239,7 @@ type RecordMoneybirdImportedIDParams struct {
 	Kind             string
 	SourceID         int64
 	TargetID         int64
+	ImportedAt       pgtype.Timestamptz
 }
 
 func (q *Queries) RecordMoneybirdImportedID(ctx context.Context, arg RecordMoneybirdImportedIDParams) error {
@@ -230,6 +248,7 @@ func (q *Queries) RecordMoneybirdImportedID(ctx context.Context, arg RecordMoney
 		arg.Kind,
 		arg.SourceID,
 		arg.TargetID,
+		arg.ImportedAt,
 	)
 	return err
 }

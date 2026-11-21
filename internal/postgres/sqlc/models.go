@@ -687,6 +687,7 @@ type MoneybirdImportID struct {
 	Kind             string
 	SourceID         int64
 	TargetID         int64
+	ImportedAt       pgtype.Timestamptz
 }
 
 type MoneybirdImportProblem struct {

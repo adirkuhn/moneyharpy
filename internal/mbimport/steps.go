@@ -232,13 +232,13 @@ func (r *run) chart(ctx context.Context) error {
 		return err
 	}
 	for source, target := range ids {
-		if err := r.s.store.RecordImported(ctx, r.job.AdministrationID, kinds[source], source, target); err != nil {
+		if err := r.s.store.RecordImported(ctx, r.job.AdministrationID, kinds[source], source, target, r.s.now()); err != nil {
 			return err
 		}
 	}
 	for account, ledger := range accountLedgers {
 		if here, ok := ids[ledger]; ok {
-			if err := r.s.store.RecordImported(ctx, r.job.AdministrationID, kindAccountLedger, account, here); err != nil {
+			if err := r.s.store.RecordImported(ctx, r.job.AdministrationID, kindAccountLedger, account, here, r.s.now()); err != nil {
 				return err
 			}
 		}
@@ -345,12 +345,12 @@ func (r *run) synced(ctx context.Context, step, path, kind string, query url.Val
 			}
 			continue
 		}
-		_, done, err := r.s.store.Imported(ctx, r.job.AdministrationID, kind, id)
+		at, done, err := r.s.store.ImportedAt(ctx, r.job.AdministrationID, kind, id)
 		if err != nil {
 			return err
 		}
 		if done {
-			st.skip()
+			st.found(at, r.job.StartedAt)
 			continue
 		}
 		todo = append(todo, v.ID)
@@ -399,10 +399,10 @@ func (r *run) take(ctx context.Context, st *Step, kind string, raws []json.RawMe
 			}
 			continue
 		}
-		if _, done, err := r.s.store.Imported(ctx, r.job.AdministrationID, kind, head.ID.id()); err != nil {
+		if at, done, err := r.s.store.ImportedAt(ctx, r.job.AdministrationID, kind, head.ID.id()); err != nil {
 			return err
 		} else if done {
-			st.skip()
+			st.found(at, r.job.StartedAt)
 			continue
 		}
 		id, err := one(ctx, raw)
@@ -422,7 +422,7 @@ func (r *run) take(ctx context.Context, st *Step, kind string, raws []json.RawMe
 		if _, mapped, err := r.s.store.Imported(ctx, r.job.AdministrationID, kind, id); err != nil {
 			return err
 		} else if !mapped {
-			if err := r.s.store.RecordImported(ctx, r.job.AdministrationID, kind, id, id); err != nil {
+			if err := r.s.store.RecordImported(ctx, r.job.AdministrationID, kind, id, id, r.s.now()); err != nil {
 				return err
 			}
 		}

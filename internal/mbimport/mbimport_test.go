@@ -128,11 +128,12 @@ func (r *fakeReader) Download(_ context.Context, _, path string) ([]byte, string
 }
 
 type memStore struct {
-	problems []Problem
-	job      *Job
-	imported map[string]resource.ID
-	empty    bool
-	saves    []Job
+	importedAt map[string]time.Time
+	problems   []Problem
+	job        *Job
+	imported   map[string]resource.ID
+	empty      bool
+	saves      []Job
 }
 
 func key(kind string, id resource.ID) string { return kind + ":" + id.String() }
@@ -159,7 +160,14 @@ func (m *memStore) Imported(_ context.Context, _ resource.ID, kind string, id re
 	t, ok := m.imported[key(kind, id)]
 	return t, ok, nil
 }
-func (m *memStore) RecordImported(_ context.Context, _ resource.ID, kind string, source, target resource.ID) error {
+func (m *memStore) ImportedAt(_ context.Context, _ resource.ID, kind string, id resource.ID) (time.Time, bool, error) {
+	at, ok := m.importedAt[key(kind, id)]
+	return at, ok, nil
+}
+func (m *memStore) RecordImported(_ context.Context, _ resource.ID, kind string, source, target resource.ID, at time.Time) error {
+	if _, ok := m.importedAt[key(kind, source)]; !ok {
+		m.importedAt[key(kind, source)] = at
+	}
 	m.imported[key(kind, source)] = target
 	return nil
 }
@@ -247,7 +255,7 @@ func setup() (*Service, *memStore, *fakeMoneybird, *fakeTargets) {
 		"products": {`{"id":"701","title":"Hosting","price":"10.0","tax_rate_id":"9101","ledger_account_id":"9001"}`},
 		"projects": {`{"id":"801","name":"Website","state":"archived","budget":40}`},
 	}}
-	store := &memStore{imported: map[string]resource.ID{}, empty: true}
+	store := &memStore{imported: map[string]resource.ID{}, importedAt: map[string]time.Time{}, empty: true}
 	t := &fakeTargets{contacts: map[resource.ID]contacts.Changes{}, people: map[resource.ID][]contacts.ImportedPerson{}, products: map[resource.ID]products.Changes{}, projects: map[resource.ID]projects.Changes{}}
 	targets := Targets{Books: t, Contacts: t, Products: productTarget{t}, Projects: projectTarget{t}}
 	return NewService(fakeAdmins{}, mb, store, plainSecrets{}, targets, func() time.Time { return now }), store, mb, t
@@ -332,6 +340,8 @@ func TestRunningAgainAddsOnlyWhatIsNew(t *testing.T) {
 	store.empty = false
 	mb.records["contacts"] = append(mb.records["contacts"], `{"id":"503","company_name":"Beispiel GmbH"}`)
 	mb.fetched = nil
+	later := now.Add(time.Hour)
+	s.now = func() time.Time { return later }
 	if _, err := s.Start(ctx, adminID, owner, "good", source); err != nil {
 		t.Fatalf("the same Moneybird administration again: %v", err)
 	}
@@ -533,18 +543,29 @@ func TestAResumedStepKeepsCountingWhatItImported(t *testing.T) {
 		t.Fatal(err)
 	}
 	_ = s.Work(ctx)
-	// As if the import stopped in the middle of contacts and tries again.
+	// As if the import stopped in the middle of contacts, its counts lost, and tries again.
 	now := s.now()
 	store.job.State, store.job.NextAttemptAt, store.job.Token = Running, &now, "good"
 	for i := range store.job.Steps {
 		if store.job.Steps[i].Kind == StepContacts {
-			store.job.Steps[i].Done = false
+			store.job.Steps[i] = Step{Kind: StepContacts, Imported: 0, Skipped: 1}
 		}
 	}
 	_ = s.Work(ctx)
-	// What this import brought in before is still imported, not skipped as if it was here before.
+	// What this import brought in is imported, not skipped as if it was here before.
 	if st := store.job.Step(StepContacts); st.Imported != 1 || st.Skipped != 0 || st.Failed != 1 {
 		t.Errorf("contacts step %+v", st)
+	}
+	// A later import finds it here already.
+	store.empty = false
+	later := now.Add(time.Hour)
+	s.now = func() time.Time { return later }
+	if _, err := s.Start(ctx, adminID, owner, "good", source); err != nil {
+		t.Fatal(err)
+	}
+	_ = s.Work(ctx)
+	if st := store.job.Step(StepContacts); st.Imported != 0 || st.Skipped != 1 {
+		t.Errorf("contacts step of the next import %+v", st)
 	}
 }
 
