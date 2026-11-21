@@ -92,6 +92,36 @@ func TestAddSniffsAndChecks(t *testing.T) {
 	}
 }
 
+func TestAddTakesEmailsAndXMLWhateverTheirType(t *testing.T) {
+	s, _ := newService()
+	ctx := context.Background()
+	email := []byte("From: Jan Voorbeeld <jan@example.com>\r\nSubject: Invoice\r\n\r\nSee attached.\r\n")
+	ubl := []byte(`<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"><ID>1</ID></Invoice>`)
+	for _, c := range []struct {
+		name, given, want string
+		data              []byte
+	}{
+		{"email.eml", "message/rfc822", "message/rfc822", email},
+		{"email.eml", "", "message/rfc822", email},
+		{"Factuur 1.xml", "application/ubl+xml", "application/xml", ubl},
+		{"Factuur 2.xml", "application/x-unknown", "application/xml", ubl},
+		{"Factuur 3.xml", "", "application/xml", ubl},
+	} {
+		a, err := s.Add(ctx, admin, "Document", 10, c.name, c.given, c.data)
+		if err != nil {
+			t.Errorf("%s as %q: %v", c.name, c.given, err)
+			continue
+		}
+		if a.ContentType != c.want {
+			t.Errorf("%s as %q: content type %s, want %s", c.name, c.given, a.ContentType, c.want)
+		}
+	}
+	// A program stays out, whatever it is called.
+	if _, err := s.Add(ctx, admin, "Document", 10, "email.eml", "application/x-msdownload", []byte{0x4d, 0x5a, 0x90, 0x00}); err == nil {
+		t.Error("executable accepted as an email")
+	}
+}
+
 func TestOpenAndDeleteStayOnTheRecord(t *testing.T) {
 	s, files := newService()
 	ctx := context.Background()

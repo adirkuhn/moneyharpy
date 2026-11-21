@@ -26,7 +26,29 @@ var ErrNotFound = errors.New("attachment not found")
 const MaxSize = 10 << 20
 
 // ContentTypes are the kinds of file people may attach.
-var ContentTypes = []string{"application/pdf", "image/png", "image/jpeg", "image/gif", "image/webp", "application/xml", "text/xml", "text/plain", "text/csv"}
+var ContentTypes = []string{"application/pdf", "image/png", "image/jpeg", "image/gif", "image/webp", "application/xml", "text/xml", "text/plain", "text/csv", "message/rfc822"}
+
+// textTypes name, by extension, a text file that sniffs as plain text: an
+// XML invoice without its declaration, or a saved email.
+var textTypes = map[string]string{".xml": "application/xml", ".eml": "message/rfc822"}
+
+// contentTypeOf is the kind of file the data is: the one given when it is
+// one people may attach, else what the data looks like, told apart by its
+// extension when it is plain text.
+func contentTypeOf(filename, given string, data []byte) string {
+	given, _, _ = strings.Cut(strings.ToLower(strings.TrimSpace(given)), ";")
+	if strings.HasSuffix(given, "+xml") {
+		given = "application/xml"
+	}
+	if slices.Contains(ContentTypes, given) {
+		return given
+	}
+	sniffed, _, _ := strings.Cut(http.DetectContentType(data), ";")
+	if t, ok := textTypes[strings.ToLower(path.Ext(filename))]; ok && (sniffed == "text/plain" || sniffed == "text/xml") {
+		return t
+	}
+	return sniffed
+}
 
 // Attachment is a file on a record.
 type Attachment struct {
@@ -92,7 +114,7 @@ func sum(data []byte) string {
 }
 
 // Add attaches a file to a record. The content type is sniffed when the
-// sender gives none or a generic one.
+// sender gives none, or one people may not attach.
 func (s *Service) Add(ctx context.Context, admin resource.ID, entityType string, entity resource.ID, filename, contentType string, data []byte) (Attachment, error) {
 	var verr resource.ValidationError
 	filename = strings.TrimSpace(path.Base(strings.ReplaceAll(filename, `\`, "/")))
@@ -102,10 +124,7 @@ func (s *Service) Add(ctx context.Context, admin resource.ID, entityType string,
 	if len(filename) > 255 {
 		verr.Add("file", "name is too long (maximum is 255 characters)")
 	}
-	contentType, _, _ = strings.Cut(strings.ToLower(strings.TrimSpace(contentType)), ";")
-	if contentType == "" || contentType == "application/octet-stream" {
-		contentType, _, _ = strings.Cut(http.DetectContentType(data), ";")
-	}
+	contentType = contentTypeOf(filename, contentType, data)
 	switch {
 	case len(data) == 0:
 		verr.Add("file", "can't be blank")
