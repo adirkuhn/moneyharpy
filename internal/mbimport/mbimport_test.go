@@ -209,12 +209,12 @@ type fakeTargets struct {
 	// takenNumbers are customer numbers other contacts here have.
 	takenNumbers []string
 	// updates are the changes made to contacts that came in before.
-	updates []contacts.Changes
-	chart        bookkeeping.ChartImport
-	contacts     map[resource.ID]contacts.Changes
-	people       map[resource.ID][]contacts.ImportedPerson
-	products     map[resource.ID]products.Changes
-	projects     map[resource.ID]projects.Changes
+	updates  []contacts.Changes
+	chart    bookkeeping.ChartImport
+	contacts map[resource.ID]contacts.Changes
+	people   map[resource.ID][]contacts.ImportedPerson
+	products map[resource.ID]products.Changes
+	projects map[resource.ID]projects.Changes
 }
 
 func (f *fakeTargets) ImportChart(_ context.Context, _, _ resource.ID, in bookkeeping.ChartImport) (bookkeeping.ChartIDs, error) {
