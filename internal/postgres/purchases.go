@@ -310,7 +310,7 @@ func (s *PurchaseStore) complete(ctx context.Context, admin resource.ID, rows []
 	for _, l := range details {
 		d := &out[index[l.PurchaseDocumentID]]
 		d.Lines = append(d.Lines, sales.Detail{
-			ID: resource.ID(l.ID), Description: l.Description, Period: l.Period, Price: money.Amount(l.Price), Amount: l.Amount, Quantity: l.Quantity,
+			ID: resource.ID(l.ID), Description: l.Description, Period: l.Period, Price: money.UnitPrice(l.Price), Amount: l.Amount, Quantity: l.Quantity,
 			TaxRateID: resource.ID(l.TaxRateID), LedgerAccountID: idOf(l.LedgerAccountID), ProjectID: idOf(l.ProjectID), ProductID: idOf(l.ProductID),
 			RowOrder: int(l.RowOrder), Selected: true, CreatedAt: l.CreatedAt.Time, UpdatedAt: l.UpdatedAt.Time,
 		})

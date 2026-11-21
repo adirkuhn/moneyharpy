@@ -14,7 +14,7 @@ import type { Opening } from './InvoiceFormPage'
 import { DateView, DetailsView, Paper, RecipientContent, SenderAddress, type ShownLine } from './InvoicePaper'
 import { addDays, addressLines, documentDate, metadataEntries, percentText, senderEntries, today, withWebsite } from './paper'
 import { invoiceTitle, type SalesInvoice } from './queries'
-import { computeTotals, parseCents, parsePercentage, parseQuantity } from './totals'
+import { computeTotals, formatUnitPrice, parsePercentage, parseQuantity, parseUnitPrice } from './totals'
 import { type TotalRow, TotalsTable } from './TotalsTable'
 
 type Props = {
@@ -56,12 +56,12 @@ export function InvoiceDocument({ administrationId, invoice: inv, editable, high
 
   const details = [...(inv.details ?? [])].sort((a, b) => (a.row_order ?? 0) - (b.row_order ?? 0))
   const totals = computeTotals(
-    details.map((d) => ({ price: parseCents(String(Number(d.price ?? 0))) ?? 0, quantity: parseQuantity(d.amount ?? '1') ?? 0, taxRateId: d.tax_rate_id ?? '', rate: percentage(d.tax_rate_id) })),
+    details.map((d) => ({ unitPrice: parseUnitPrice(String(d.price ?? 0)) ?? 0, quantity: parseQuantity(d.amount ?? '1') ?? 0, taxRateId: d.tax_rate_id ?? '', rate: percentage(d.tax_rate_id) })),
     parsePercentage(Number(inv.discount ?? 0) ? String(Number(inv.discount)) : '') ?? 0,
     inv.prices_are_incl_tax ?? false,
   )
   const lines: ShownLine[] = details.map((d, i) => ({
-    quantity: quantityLabel(d.amount ?? ''), description: d.description ?? '', price: money(d.price), total: cents(totals.lines[i] ?? 0), vat: percentText(rateOf(d.tax_rate_id)?.percentage),
+    quantity: quantityLabel(d.amount ?? ''), description: d.description ?? '', price: formatUnitPrice(d.price, currency, language), total: cents(totals.lines[i] ?? 0), vat: percentText(rateOf(d.tax_rate_id)?.percentage),
   }))
   const inclTax = inv.prices_are_incl_tax ?? false
   const totalRows: TotalRow[] = [

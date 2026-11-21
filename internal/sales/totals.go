@@ -64,7 +64,7 @@ func divRound(n, d int64) int64 {
 
 // Line is what totals need of an invoice line.
 type Line struct {
-	Price    money.Amount
+	Price    money.UnitPrice
 	Quantity int64 // thousandths
 	// TaxRateID groups lines for VAT; Rate is its percentage in hundredths.
 	TaxRateID resource.ID
@@ -103,7 +103,7 @@ func Compute(lines []Line, discount int64, inclTax bool) Totals {
 		if l.Optional && !l.Selected {
 			continue
 		}
-		gross := divRound(int64(l.Price)*l.Quantity, 1000)
+		gross := int64(l.Price.Times(l.Quantity))
 		net := gross - divRound(gross*discount, 10000)
 		tot.Discount += money.Amount(gross - net)
 		amounts[i] = net

@@ -3,6 +3,7 @@ package invoicedoc
 import (
 	"bytes"
 	"encoding/xml"
+	"github.com/adirkuhn/moneyharpy/internal/money"
 	"image"
 	"image/color"
 	"image/png"
@@ -25,8 +26,8 @@ func document(t *testing.T, language string) sales.Document {
 	inv := sales.Invoice{
 		InvoiceID: "2026-0001", Language: language, Currency: "EUR", InvoiceDate: &day, DueDate: &due, PaymentReference: "2026-0001",
 		Reference: "Order 7", Lines: []sales.Detail{
-			{Description: "Consultancy november\nOn site", Amount: "2 uur", Quantity: 2000, Price: 10000, TaxRateID: 1, Selected: true},
-			{Description: "Café visit, € included", Amount: "1", Quantity: 1000, Price: 5000, TaxRateID: 2, Selected: true},
+			{Description: "Consultancy november\nOn site", Amount: "2 uur", Quantity: 2000, Price: money.FromAmount(10000), TaxRateID: 1, Selected: true},
+			{Description: "Café visit, € included", Amount: "1", Quantity: 1000, Price: money.FromAmount(5000), TaxRateID: 2, Selected: true},
 		},
 	}
 	rates := map[resource.ID]bookkeeping.TaxRate{1: {Percentage: "21"}, 2: {Percentage: "9.0"}}

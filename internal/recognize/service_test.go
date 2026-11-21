@@ -527,13 +527,13 @@ func TestEditedUnmarksChangedFieldsAndLearnsFromBookedDocuments(t *testing.T) {
 	ledger := resource.ID(500)
 	before := purchases.Document{
 		ID: 10, Kind: purchases.PurchaseInvoice, State: purchases.New, ContactID: 77, Reference: "A", Currency: "EUR",
-		Lines: []sales.Detail{{ID: 1, Description: "Hosting", Price: 100, TaxRateID: 1}},
+		Lines: []sales.Detail{{ID: 1, Description: "Hosting", Price: money.FromAmount(100), TaxRateID: 1}},
 	}
 	f.store.recs[10] = Recognition{DocumentID: 10, State: StateDone, Fields: []Field{
 		{Name: FieldReference}, {Name: FieldContactID}, {Name: "details.0.price"}, {Name: "details.0.description"},
 	}}
 	after := before
-	after.Lines = []sales.Detail{{ID: 1, Description: "Hosting", Price: 150, TaxRateID: 1, LedgerAccountID: &ledger}}
+	after.Lines = []sales.Detail{{ID: 1, Description: "Hosting", Price: money.FromAmount(150), TaxRateID: 1, LedgerAccountID: &ledger}}
 	after.Reference, after.State = "B", purchases.Open
 
 	f.svc.Edited(ctx, admin, owner, before, after, nil)

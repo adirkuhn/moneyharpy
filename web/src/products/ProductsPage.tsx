@@ -2,7 +2,6 @@ import { ActionLink } from '../layout/ActionLink'
 import { useEffect, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams, useSearchParams } from 'react-router-dom'
-import { formatAmount } from '../banking/queries'
 import { useLedgerAccounts, useTaxRates } from '../bookkeeping/queries'
 import { InfoIcon, ListIcon, SearchIcon } from '../layout/icons'
 import { Loading } from '../layout/Loading'
@@ -11,6 +10,7 @@ import { DocumentTable } from '../list/DocumentTable'
 import { GettingStarted } from '../list/GettingStarted'
 import { exportProducts } from './exportProducts'
 import { perPage, type Product, productName, useProducts } from './queries'
+import { formatUnitPrice } from '../invoices/totals'
 
 type Order = 'none' | 'ascending' | 'descending'
 
@@ -130,7 +130,7 @@ export function ProductsPage() {
             columns={[
               { key: 'title', header: t('products.productTitle'), link: true, cell: (p) => productName(p, t) },
               {
-                key: 'price', header: t('products.amount'), kind: 'amount', cell: (p) => formatAmount(p.price, p.currency ?? 'EUR', i18n.language),
+                key: 'price', header: t('products.amount'), kind: 'amount', cell: (p) => formatUnitPrice(p.price, p.currency ?? 'EUR', i18n.language),
                 sort: { direction: order, onToggle: () => setOrder(order === 'ascending' ? 'descending' : 'ascending') },
               },
               { key: 'rate', header: t('products.vatRate'), cell: rateName },

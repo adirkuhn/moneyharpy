@@ -17,6 +17,7 @@ import type { LineRow } from './LinesEditor'
 import { EditableDocumentForm } from './EditableDocumentForm'
 import { today } from './paper'
 import { type TotalRow, TotalsTable } from './TotalsTable'
+import { formatUnitPrice } from './totals'
 
 /** A detail row as the editor keeps it: a line with its period and the product it came from. */
 export type DetailRow = LineRow & { period: string; product_id: string; /** The period the server keeps, so clearing it is sent. */ savedPeriod?: string }
@@ -517,7 +518,7 @@ function ProductDescription({ administrationId, currency, value, control, onChan
             >
               <strong>{p.title || p.description}</strong>
               {p.title && p.description && <span className="hint">{p.description}</span>}
-              {p.price !== undefined && p.price !== null && <span className="details-editor__product-price">{formatAmount(Number(p.price), p.currency || currency, i18n.language)}</span>}
+              {p.price !== undefined && p.price !== null && <span className="details-editor__product-price">{formatUnitPrice(p.price, p.currency || currency, i18n.language)}</span>}
             </li>
           ))}
         </ul>

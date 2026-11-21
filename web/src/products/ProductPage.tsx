@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
-import { formatAmount } from '../banking/queries'
 import { type LedgerAccount, type TaxRate, useLedgerAccounts, useTaxRates } from '../bookkeeping/queries'
 import { ConfirmPanel, DetailList, type DetailRow } from '../detail/Detail'
 import { formErrors } from '../forms/Form'
@@ -15,6 +14,7 @@ import { Page } from '../layout/Page'
 import { type MenuItem, MoreMenu } from '../list/ListActions'
 import { type Product, productFrequency, productImageURL, productName, useDeleteProduct, useProduct } from './queries'
 import './products.css'
+import { formatUnitPrice } from '../invoices/totals'
 
 /**
  * One product (/products/:productId), after Moneybird's: what it is, its
@@ -50,7 +50,7 @@ function ProductView({ administrationId, product, rates, accounts }: ViewProps) 
   const rows: DetailRow[] = [
     [t('products.productTitle'), product.title || '-'],
     [t('products.description'), product.description || '-'],
-    [t('products.amount'), formatAmount(product.price, product.currency ?? 'EUR', i18n.language)],
+    [t('products.amount'), formatUnitPrice(product.price, product.currency ?? 'EUR', i18n.language)],
     [t('products.productType'), product.product_type ? t(`products.productTypes.${product.product_type}`) : undefined],
     smart
       ? [t('products.tax_rate_type'), t(`products.vatRateTypes.${product.vat_rate_type}`)]

@@ -41,10 +41,10 @@ func TestTotalsExclusiveRoundPerRate(t *testing.T) {
 	// per rate it is 21% of 0.30 = 0.063, so 0.06 too, but 0.15 x 3 shows
 	// the difference: per line 0.03 x 3 = 0.09, per rate 21% of 0.45 = 0.09.
 	lines := []Line{
-		{Price: 15, Quantity: 1000, TaxRateID: high, Rate: 2100},
-		{Price: 15, Quantity: 1000, TaxRateID: high, Rate: 2100},
-		{Price: 15, Quantity: 1000, TaxRateID: high, Rate: 2100},
-		{Price: 1000, Quantity: 2500, TaxRateID: low, Rate: 900},
+		{Price: money.FromAmount(15), Quantity: 1000, TaxRateID: high, Rate: 2100},
+		{Price: money.FromAmount(15), Quantity: 1000, TaxRateID: high, Rate: 2100},
+		{Price: money.FromAmount(15), Quantity: 1000, TaxRateID: high, Rate: 2100},
+		{Price: money.FromAmount(1000), Quantity: 2500, TaxRateID: low, Rate: 900},
 	}
 	tot := Compute(lines, 0, false)
 	if tot.ExclTax != 45+2500 || tot.Tax != 9+225 || tot.InclTax != 45+2500+9+225 {
@@ -57,7 +57,7 @@ func TestTotalsExclusiveRoundPerRate(t *testing.T) {
 
 func TestTotalsInclusive(t *testing.T) {
 	// 121.00 incl 21% is 100.00 + 21.00; two lines of 60.50 split it.
-	lines := []Line{{Price: 6050, Quantity: 1000, TaxRateID: high, Rate: 2100}, {Price: 6050, Quantity: 1000, TaxRateID: high, Rate: 2100}}
+	lines := []Line{{Price: money.FromAmount(6050), Quantity: 1000, TaxRateID: high, Rate: 2100}, {Price: money.FromAmount(6050), Quantity: 1000, TaxRateID: high, Rate: 2100}}
 	tot := Compute(lines, 0, true)
 	if tot.InclTax != 12100 || tot.ExclTax != 10000 || tot.Tax != 2100 {
 		t.Errorf("totals = %+v", tot)
@@ -73,7 +73,7 @@ func TestTotalsInclusive(t *testing.T) {
 
 func TestTotalsDiscountAndQuantity(t *testing.T) {
 	// 3 x 33.33 = 99.99, 10% discount = 89.99 (rounded), 21% VAT = 18.90.
-	lines := []Line{{Price: 3333, Quantity: 3000, TaxRateID: high, Rate: 2100}}
+	lines := []Line{{Price: money.FromAmount(3333), Quantity: 3000, TaxRateID: high, Rate: 2100}}
 	tot := Compute(lines, 1000, false)
 	if tot.ExclTax != 8999 || tot.Discount != 1000 || tot.Tax != 1890 || tot.InclTax != 10889 {
 		t.Errorf("totals = %+v", tot)
@@ -81,14 +81,14 @@ func TestTotalsDiscountAndQuantity(t *testing.T) {
 }
 
 func TestTotalsSkipUnselectedOptionalLines(t *testing.T) {
-	lines := []Line{{Price: 1000, Quantity: 1000, TaxRateID: high, Rate: 2100}, {Price: 500, Quantity: 1000, TaxRateID: high, Rate: 2100, Optional: true}}
+	lines := []Line{{Price: money.FromAmount(1000), Quantity: 1000, TaxRateID: high, Rate: 2100}, {Price: money.FromAmount(500), Quantity: 1000, TaxRateID: high, Rate: 2100, Optional: true}}
 	if tot := Compute(lines, 0, false); tot.ExclTax != 1000 || tot.LineBases[1] != 0 {
 		t.Errorf("totals = %+v", tot)
 	}
 }
 
 func TestTotalsCredit(t *testing.T) {
-	lines := []Line{{Price: 1000, Quantity: -1000, TaxRateID: high, Rate: 2100}}
+	lines := []Line{{Price: money.FromAmount(1000), Quantity: -1000, TaxRateID: high, Rate: 2100}}
 	if tot := Compute(lines, 0, false); tot.InclTax != -1210 || tot.Tax != -210 {
 		t.Errorf("credit totals = %+v", tot)
 	}

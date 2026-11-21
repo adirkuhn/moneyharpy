@@ -319,8 +319,8 @@ func percentText(p int64) string {
 
 // linePrice is what one billing period of the product costs for a
 // subscription that bills it every count periods.
-func linePrice(p products.Product, count int) money.Amount {
-	return p.Price * money.Amount(count)
+func linePrice(p products.Product, count int) money.UnitPrice {
+	return p.Price * money.UnitPrice(count)
 }
 
 // sortItems keeps items by start date.

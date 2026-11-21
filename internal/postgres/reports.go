@@ -179,7 +179,7 @@ func (s *ReportStore) Subscriptions(ctx context.Context, admin resource.ID) ([]r
 		out[i] = reports.SubscriptionItem{
 			SubscriptionID: resource.ID(r.ID), ContactID: resource.ID(r.ContactID), Start: dayOf(r.StartDate), End: optionalDayOf(r.EndDate),
 			ItemStart: dayOf(r.ItemStart), ItemEnd: optionalDayOf(r.ItemEnd), Quantity: r.Quantity, Discount: int64(r.Discount),
-			Price: money.Amount(r.Price), Every: int(r.FrequencyCount), Unit: r.FrequencyType,
+			Price: money.UnitPrice(r.Price), Every: int(r.FrequencyCount), Unit: r.FrequencyType,
 		}
 		if r.CancelledAt.Valid {
 			out[i].CancelledAt = &r.CancelledAt.Time

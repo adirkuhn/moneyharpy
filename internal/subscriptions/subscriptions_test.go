@@ -3,6 +3,7 @@ package subscriptions
 import (
 	"context"
 	"errors"
+	"github.com/adirkuhn/moneyharpy/internal/money"
 	"slices"
 	"testing"
 	"time"
@@ -73,7 +74,7 @@ func TestCreateStartsARecurringInvoice(t *testing.T) {
 	if !r.AutoSend || r.InvoiceDate.Format(time.DateOnly) != "2026-11-12" || r.Discount != 1000 || r.ContactID != customer {
 		t.Errorf("recurring = %+v", r)
 	}
-	if len(r.Lines) != 1 || *r.Lines[0].ProductID != monthly || r.Lines[0].Price != 2000 || r.Lines[0].Period != "20261112..20261211" {
+	if len(r.Lines) != 1 || *r.Lines[0].ProductID != monthly || r.Lines[0].Price != money.FromAmount(2000) || r.Lines[0].Period != "20261112..20261211" {
 		t.Errorf("lines = %+v", r.Lines)
 	}
 	list, err := h.svc.List(context.Background(), adminID, owner, customer)
@@ -89,7 +90,7 @@ func TestCreateBillsNoSoonerThanTomorrowAndAtTheChosenFrequency(t *testing.T) {
 	h := newHarness(t)
 	sub := subscribe(t, h, Input{StartDate: ptrTo("2026-01-01"), FrequencyType: ptrTo("year"), EndDate: ptrTo("2028-11-12")})
 	r := h.sales.recurring[*sub.RecurringID]
-	if r.InvoiceDate.Format(time.DateOnly) != "2026-11-12" || r.FrequencyType != "year" || r.Lines[0].Price != 24000 {
+	if r.InvoiceDate.Format(time.DateOnly) != "2026-11-12" || r.FrequencyType != "year" || r.Lines[0].Price != money.FromAmount(24000) {
 		t.Errorf("recurring = %+v", r)
 	}
 	if r.LastDate == nil || r.LastDate.Format(time.DateOnly) != "2028-11-11" || sub.StartDate.Format(time.DateOnly) != "2026-01-01" {
@@ -138,7 +139,7 @@ func TestUpdateChangesTheProductAndBillsTheDifference(t *testing.T) {
 		t.Errorf("items = %+v", got.Items)
 	}
 	r := h.sales.recurring[*sub.RecurringID]
-	if *r.Lines[0].ProductID != premium || r.Lines[0].Price != 3000 || r.Lines[0].Description != "Premium hosting" {
+	if *r.Lines[0].ProductID != premium || r.Lines[0].Price != money.FromAmount(3000) || r.Lines[0].Description != "Premium hosting" {
 		t.Errorf("recurring line = %+v", r.Lines[0])
 	}
 	oneOffs := h.store.oneOffs[sub.ID]
@@ -146,7 +147,7 @@ func TestUpdateChangesTheProductAndBillsTheDifference(t *testing.T) {
 		t.Fatalf("one-off invoices = %v", oneOffs)
 	}
 	extra := h.sales.invoices[oneOffs[0]]
-	if extra.State != sales.Scheduled || extra.InvoiceDate.Format(time.DateOnly) != "2026-12-12" || extra.Lines[0].Price != 500 {
+	if extra.State != sales.Scheduled || extra.InvoiceDate.Format(time.DateOnly) != "2026-12-12" || extra.Lines[0].Price != money.FromAmount(500) {
 		t.Errorf("difference = %+v", extra)
 	}
 
@@ -157,7 +158,7 @@ func TestUpdateChangesTheProductAndBillsTheDifference(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(done.Lines) != 2 || done.Lines[1].Price != 500 || !slices.Contains(h.sales.deleted, extra.ID) {
+	if len(done.Lines) != 2 || done.Lines[1].Price != money.FromAmount(500) || !slices.Contains(h.sales.deleted, extra.ID) {
 		t.Errorf("merged = %+v, deleted %v", done.Lines, h.sales.deleted)
 	}
 	if countOf(h.notifier.actions, "sales_invoice_created_based_on_subscription") != 2 {
@@ -289,7 +290,7 @@ func TestContactChargesAreBilledAfterTheMonth(t *testing.T) {
 		t.Fatalf("invoices = %+v", h.sales.invoices)
 	}
 	inv := h.sales.invoices[h.sales.sent[0]]
-	if inv.InvoiceDate.Format(time.DateOnly) != "2026-12-01" || inv.State != sales.Open || inv.Lines[0].Price != 5000 || inv.Lines[0].Period != "20261101..20261130" {
+	if inv.InvoiceDate.Format(time.DateOnly) != "2026-12-01" || inv.State != sales.Open || inv.Lines[0].Price != money.FromAmount(5000) || inv.Lines[0].Period != "20261101..20261130" {
 		t.Errorf("invoice = %+v", inv)
 	}
 	if err := h.svc.Work(ctx); err != nil || len(h.sales.invoices) != 1 {

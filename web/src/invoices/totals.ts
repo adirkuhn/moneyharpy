@@ -17,6 +17,30 @@ export function parseCents(text: string): number | null {
   return m[1] === '-' ? -cents : cents
 }
 
+/** Reads a unit price like the server does, in millionths: "12,5", "8.985" or "-0.0825"; null when it is not one. */
+export function parseUnitPrice(text: string): number | null {
+  const s = text.trim().replace(',', '.')
+  if (s === '') {
+    return 0
+  }
+  const m = /^([+-]?)(\d{0,9})(?:\.(\d{0,6}))?$/.exec(s)
+  if (!m || (m[2] === '' && !m[3])) {
+    return null
+  }
+  const value = Number(m[2] || '0') * 1_000_000 + Number((m[3] ?? '').padEnd(6, '0'))
+  return m[1] === '-' ? -value : value
+}
+
+/** Shows a unit price in its currency with its cents, and the decimals it has beyond them: "€12.50", "€8.985". */
+export function formatUnitPrice(price: string | number | null | undefined, currency: string, language: string) {
+  const value = Number(price ?? 0)
+  try {
+    return new Intl.NumberFormat(language, { style: 'currency', currency, minimumFractionDigits: 2, maximumFractionDigits: 6 }).format(value)
+  } catch {
+    return String(value)
+  }
+}
+
 /** Reads the number in front of a quantity such as "2" or "1,5 hours", in thousandths. */
 export function parseQuantity(text: string): number | null {
   const m = /^\s*(-?)(\d{1,9})(?:[.,](\d{1,3}))?(?:\s.*)?$/.exec(text)
@@ -47,7 +71,18 @@ function divRound(n: number, d: number) {
   return n < 0 ? -q : q
 }
 
-export type TotalsLine = { price: number; quantity: number; taxRateId: string; rate: number }
+/** A line as far as totals need it: its unit price in millionths and its quantity in thousandths. */
+export type TotalsLine = { unitPrice: number; quantity: number; taxRateId: string; rate: number }
+
+/** What a line comes to in cents, rounded half away from zero; exact for any price and quantity. */
+export function lineCents(unitPrice: number, quantity: number) {
+  // millionths × thousandths = 10⁻⁹; cents are 10⁻², so ÷ 10⁷.
+  const n = BigInt(unitPrice) * BigInt(quantity)
+  const d = 10_000_000n
+  const abs = n < 0n ? -n : n
+  const q = (abs + d / 2n) / d
+  return Number(n < 0n ? -q : q)
+}
 export type RateTotal = { taxRateId: string; taxable: number; tax: number }
 
 export type Totals = {
@@ -68,7 +103,7 @@ export function computeTotals(lines: TotalsLine[], discount: number, inclTax: bo
   let subtotal = 0
   let taken = 0
   const amounts = lines.map((l) => {
-    const gross = divRound(l.price * l.quantity, 1000)
+    const gross = lineCents(l.unitPrice, l.quantity)
     const net = gross - divRound(gross * discount, 10000)
     subtotal += gross
     taken += gross - net

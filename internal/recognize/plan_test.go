@@ -143,7 +143,7 @@ func TestPlanKeepsWhatAUserFilledIn(t *testing.T) {
 	e := Extraction{Reference: certain("R-2"), Date: certain(day("2026-10-01")), Currency: certain("USD"), TotalInclTax: certain(money.Amount(100))}
 	target := Target{
 		Kind: purchases.PurchaseInvoice, ContactID: 3, Reference: "Typed by hand", Date: day("2026-11-13"), Currency: "EUR",
-		Lines: []sales.Detail{{ID: 50, Description: "By hand", Price: 100}},
+		Lines: []sales.Detail{{ID: 50, Description: "By hand", Price: money.FromAmount(100)}},
 	}
 	// The first reading fills in the defaults, not what was typed.
 	p := MakePlan(PlanInput{Extraction: e, Target: target, Supplier: SupplierMatch{ContactID: 4, Confidence: Certain}, Rates: testRates})

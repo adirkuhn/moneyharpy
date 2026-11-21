@@ -198,7 +198,7 @@ type Detail struct {
 	Description string
 	// Period is the range of days the line is about, as yyyymmdd..yyyymmdd.
 	Period string
-	Price  money.Amount
+	Price  money.UnitPrice
 	// Amount is the quantity as people wrote it, such as "2 hours";
 	// Quantity is its number in thousandths.
 	Amount          string

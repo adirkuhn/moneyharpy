@@ -58,7 +58,7 @@ type Product struct {
 	// Identifier is the administration's own code for the product, such
 	// as an article number; unique when set.
 	Identifier string
-	Price      money.Amount
+	Price      money.UnitPrice
 	Currency   string
 	// Frequency and FrequencyType say how often the product is billed;
 	// zero and empty when it is not billed periodically.
@@ -347,11 +347,11 @@ func (s *Service) apply(ctx context.Context, user resource.ID, p *Product, c Cha
 	text(&p.CheckoutDescription, c.CheckoutDescription)
 	text(&p.Identifier, c.Identifier)
 	if c.Price != nil {
-		price, err := money.ParseAmount(*c.Price)
+		price, err := money.ParseUnitPrice(*c.Price)
 		switch {
 		case err != nil:
 			verr.Add("price", "is not an amount")
-		case price > 1_000_000_000_00 || price < -1_000_000_000_00:
+		case price > money.FromAmount(1_000_000_000_00) || price < money.FromAmount(-1_000_000_000_00):
 			verr.Add("price", "must be from -1,000,000,000 to 1,000,000,000")
 		default:
 			p.Price = price

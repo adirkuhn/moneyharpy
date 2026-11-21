@@ -91,9 +91,9 @@ func (fakeCatalog) Product(_ context.Context, _, id, _ resource.ID) (products.Pr
 	rate := vat21
 	switch id {
 	case widget:
-		return products.Product{ID: id, Title: "Widget", Description: "Widget, blue", Price: 2500, TaxRateID: &rate, LedgerAccountID: consulting, Active: true}, nil
+		return products.Product{ID: id, Title: "Widget", Description: "Widget, blue", Price: money.FromAmount(2500), TaxRateID: &rate, LedgerAccountID: consulting, Active: true}, nil
 	case retired:
-		return products.Product{ID: id, Title: "Old widget", Price: 100, LedgerAccountID: consulting}, nil
+		return products.Product{ID: id, Title: "Old widget", Price: money.FromAmount(100), LedgerAccountID: consulting}, nil
 	}
 	return products.Product{}, products.ErrNotFound
 }

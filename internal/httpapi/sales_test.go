@@ -326,3 +326,28 @@ func TestDownloadLinksExpireAndCannotBeForged(t *testing.T) {
 	}
 	wantStatus(t, stranger.do(http.MethodGet, link, nil), http.StatusOK)
 }
+
+func TestALinePriceKeepsSixDecimals(t *testing.T) {
+	h := newHarness(t, options{})
+	owner := h.client()
+	owner.register()
+	a := owner.createAdministration("Harpy")
+	api := "/api/v2/" + a.Id
+	customer := decode[contact](t, owner.do(http.MethodPost, api+"/contacts", map[string]any{"contact": map[string]any{"company_name": "Example Shop B.V."}}))
+	vat21 := salesRate(t, owner, a.Id, "21")
+	created := owner.do(http.MethodPost, api+"/sales_invoices", map[string]any{"sales_invoice": map[string]any{
+		"contact_id": customer.ID, "details_attributes": []map[string]any{{"description": "Energy", "amount": "3", "price": "0.0825", "tax_rate_id": vat21}},
+	}})
+	wantStatus(t, created, http.StatusCreated)
+	inv := decode[map[string]any](t, created)
+	// 3 × 0.0825 = 0.2475, which comes to 0.25; 21% VAT on it is 0.05.
+	detail := inv["details"].([]any)[0].(map[string]any)
+	if detail["price"] != "0.0825" || inv["total_price_excl_tax"] != "0.25" || inv["total_price_incl_tax"] != "0.3" {
+		t.Errorf("price %v, totals %v / %v", detail["price"], inv["total_price_excl_tax"], inv["total_price_incl_tax"])
+	}
+	if bad := owner.do(http.MethodPost, api+"/sales_invoices", map[string]any{"sales_invoice": map[string]any{
+		"contact_id": customer.ID, "details_attributes": []map[string]any{{"description": "Energy", "price": "0.0000001", "tax_rate_id": vat21}},
+	}}); bad.status != http.StatusBadRequest {
+		t.Errorf("seven decimals: %d", bad.status)
+	}
+}

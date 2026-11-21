@@ -260,7 +260,7 @@ func (s *SalesStore) completeEstimates(ctx context.Context, admin resource.ID, r
 	for _, d := range details {
 		e := &out[index[d.EstimateID]]
 		e.Lines = append(e.Lines, sales.Detail{
-			ID: resource.ID(d.ID), Description: d.Description, Period: d.Period, Price: money.Amount(d.Price), Amount: d.Amount, Quantity: d.Quantity,
+			ID: resource.ID(d.ID), Description: d.Description, Period: d.Period, Price: money.UnitPrice(d.Price), Amount: d.Amount, Quantity: d.Quantity,
 			TaxRateID: resource.ID(d.TaxRateID), LedgerAccountID: idOf(d.LedgerAccountID), ProjectID: idOf(d.ProjectID), ProductID: idOf(d.ProductID),
 			RowOrder: int(d.RowOrder), Optional: d.IsOptional, Selected: d.IsSelected, CreatedAt: d.CreatedAt.Time, UpdatedAt: d.UpdatedAt.Time,
 		})

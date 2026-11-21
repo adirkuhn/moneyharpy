@@ -555,8 +555,8 @@ func (w *writer) table() {
 		cells := []string{d.Amount, d.Description}
 		if w.prices {
 			rate := w.doc.Rates[d.TaxRateID]
-			total := money.Amount(divRound(int64(d.Price)*d.Quantity, 1000))
-			cells = append(cells, sales.FormatMoney(d.Price, inv.Currency, inv.Language), sales.FormatMoney(total, inv.Currency, inv.Language), percent(rate.Percentage))
+			total := d.Price.Times(d.Quantity)
+			cells = append(cells, sales.FormatUnitPrice(d.Price, inv.Currency, inv.Language), sales.FormatMoney(total, inv.Currency, inv.Language), percent(rate.Percentage))
 		}
 		height := w.wrappedHeight(d.Description, w.cols[1].w, w.size-0.5) + 2*rowPadding
 		if pdf.GetY()+height > w.bottom() {
@@ -668,13 +668,6 @@ func writeSpans(pdf *fpdf.Fpdf, f face, spans []sales.Span, size float64) {
 		f.set(pdf, style, size)
 		pdf.Write(5, sp.Text)
 	}
-}
-
-func divRound(n, d int64) int64 {
-	if n < 0 {
-		return -((-n + d/2) / d)
-	}
-	return (n + d/2) / d
 }
 
 func countryName(code, language string) string {

@@ -91,6 +91,22 @@ components:
 	}
 }
 
+func TestSchemasCorrectsWhatMoneybirdReturnsOtherwise(t *testing.T) {
+	spec := map[string]any{"components": map[string]any{"schemas": map[string]any{
+		"detail_response": map[string]any{"type": "object", "properties": map[string]any{
+			"price": map[string]any{"type": "string", "pattern": `^-?\d+\.\d{1,2}$`},
+		}},
+	}}}
+	got, err := schemas(spec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	price := got["detail_response"].(map[string]any)["properties"].(map[string]any)["price"].(map[string]any)
+	if price["pattern"] != `^-?\d+\.\d{1,6}$` {
+		t.Errorf("price pattern = %v", price["pattern"])
+	}
+}
+
 func TestReplaceBlock(t *testing.T) {
 	doc := "a: 1\n" + beginMarker + "\n    old: {}\n" + endMarker + "\n"
 	got, err := replaceBlock(doc, "    new: {}\n")

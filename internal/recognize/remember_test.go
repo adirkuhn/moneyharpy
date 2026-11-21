@@ -2,6 +2,7 @@ package recognize
 
 import (
 	"context"
+	"github.com/adirkuhn/moneyharpy/internal/money"
 	"testing"
 
 	"github.com/adirkuhn/moneyharpy/internal/contacts"
@@ -23,7 +24,7 @@ func fieldsByName(fs []Field) map[string]Field {
 func booked(id resource.ID, kind, description string, ledger, rate resource.ID) purchases.Document {
 	return purchases.Document{
 		ID: id, Kind: kind, ContactID: 77, State: purchases.Open, Currency: "EUR", Date: day("2026-10-01").AddDate(0, 0, int(id)),
-		Lines: []sales.Detail{{ID: id * 10, Description: description, Price: 1000, TaxRateID: rate, LedgerAccountID: ledgerPtr(ledger)}},
+		Lines: []sales.Detail{{ID: id * 10, Description: description, Price: money.FromAmount(1000), TaxRateID: rate, LedgerAccountID: ledgerPtr(ledger)}},
 	}
 }
 
@@ -125,10 +126,10 @@ func changing(f *fixture) (before, after purchases.Document) {
 	before = purchases.Document{
 		ID: 10, Kind: purchases.PurchaseInvoice, State: purchases.New, ContactID: 77, Currency: "EUR", PricesAreInclTax: false,
 		Lines: []sales.Detail{
-			{ID: 101, Description: "Hosting November", Price: 1000, TaxRateID: 1, LedgerAccountID: ledgerPtr(500)},
-			{ID: 102, Description: "Domain", Price: 200, TaxRateID: 1, LedgerAccountID: ledgerPtr(uncategorized)},
+			{ID: 101, Description: "Hosting November", Price: money.FromAmount(1000), TaxRateID: 1, LedgerAccountID: ledgerPtr(500)},
+			{ID: 102, Description: "Domain", Price: money.FromAmount(200), TaxRateID: 1, LedgerAccountID: ledgerPtr(uncategorized)},
 			// Set by the user: not marked.
-			{ID: 103, Description: "Support", Price: 300, TaxRateID: 1, LedgerAccountID: ledgerPtr(502)},
+			{ID: 103, Description: "Support", Price: money.FromAmount(300), TaxRateID: 1, LedgerAccountID: ledgerPtr(502)},
 		},
 	}
 	after = before
@@ -253,7 +254,7 @@ func TestRememberFillsADocumentEnteredByHand(t *testing.T) {
 	f.docs.incoming[32] = purchases.Incoming{ID: 32, Kind: purchases.Receipt, Reference: "EX-32"}
 	// A purchase invoice, though the supplier sent receipts so far.
 	d := purchases.Document{ID: 20, Kind: purchases.PurchaseInvoice, State: purchases.New, ContactID: 77, Currency: "EUR",
-		Lines: []sales.Detail{{ID: 201, Description: "Coffee", Price: 500, TaxRateID: 1, LedgerAccountID: ledgerPtr(uncategorized)}}}
+		Lines: []sales.Detail{{ID: 201, Description: "Coffee", Price: money.FromAmount(500), TaxRateID: 1, LedgerAccountID: ledgerPtr(uncategorized)}}}
 
 	c, remembered := f.svc.Remember(ctx, admin, owner, purchases.Document{}, d)
 

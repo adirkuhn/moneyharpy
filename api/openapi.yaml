@@ -17233,6 +17233,17 @@ components:
         - type: number
           minimum: -1000000000
           maximum: 1000000000
+    UnitPrice:
+      description: >-
+        The price of one unit, such as "10.95", "-3,5" or "0.0825": up to six decimals, as a price per kWh may need.
+        What a line comes to is rounded to the cent. A number is accepted too.
+      oneOf:
+        - type: string
+          pattern: '^[-+]?[0-9]*[,.]?[0-9]{0,6}$'
+          maxLength: 20
+        - type: number
+          minimum: -1000000000
+          maximum: 1000000000
     FinancialAccountType:
       type: string
       enum: [BankAccount, CashAccount, CreditCardAccount, PaymentServiceAccount, CustomAccount]
@@ -18084,7 +18095,7 @@ components:
           description: The days the line is about, as yyyymmdd..yyyymmdd; empty clears it.
           pattern: '^(\d{8}\.\.\d{8})?$'
         price:
-          $ref: '#/components/schemas/Money'
+          $ref: '#/components/schemas/UnitPrice'
         amount:
           description: The quantity, such as "2" or "1,5 hours"; it must start with a number.
           oneOf:
@@ -19649,7 +19660,7 @@ components:
               description: Accepted and kept; MoneyHarpy has no online checkout.
               maxLength: 10000
             price:
-              $ref: '#/components/schemas/Money'
+              $ref: '#/components/schemas/UnitPrice'
             document_style_id:
               $ref: '#/components/schemas/FlexibleIdentifier'
             ledger_account_id:
@@ -20062,7 +20073,7 @@ components:
           description: The days the line is about, as yyyymmdd..yyyymmdd; empty clears it.
           pattern: '^(\d{8}\.\.\d{8})?$'
         price:
-          $ref: '#/components/schemas/Money'
+          $ref: '#/components/schemas/UnitPrice'
         amount:
           description: The quantity, such as "2" or "1,5 hours"; it must start with a number.
           oneOf:
@@ -22008,7 +22019,7 @@ components:
           pattern: ^\d{6,8}..\d{6,8}$
           type: string
         price:
-          pattern: ^-?\d+\.\d{1,2}$
+          pattern: ^-?\d+\.\d{1,6}$
           type: string
         product_id:
           $ref: '#/components/schemas/identifier_nullable'

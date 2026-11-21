@@ -17,7 +17,7 @@ func bookedTotal(t *testing.T, p Plan) money.Amount {
 		if d.Destroy {
 			continue
 		}
-		price, err := money.ParseAmount(*d.Price)
+		price, err := money.ParseUnitPrice(*d.Price)
 		if err != nil {
 			t.Fatal(err)
 		}

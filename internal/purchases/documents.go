@@ -511,7 +511,7 @@ func (s *Service) applyLine(ctx context.Context, admin, user resource.ID, d *sal
 		d.Period = strings.TrimSpace(*in.Period)
 	}
 	if in.Price != nil {
-		if p, err := money.ParseAmount(*in.Price); err != nil {
+		if p, err := money.ParseUnitPrice(*in.Price); err != nil {
 			verr.Add(field+".price", "is not an amount")
 		} else {
 			d.Price = p

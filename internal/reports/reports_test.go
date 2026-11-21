@@ -309,9 +309,9 @@ func TestSubscriptions(t *testing.T) {
 	f := newFixture()
 	jan := day("2025-01-01")
 	f.store.subscriptions = []SubscriptionItem{
-		{SubscriptionID: 1, ContactID: alice, Start: jan, ItemStart: jan, Quantity: 1000, Price: 1000, Every: 1, Unit: "month"},
-		{SubscriptionID: 2, ContactID: alice, Start: jan, ItemStart: jan, Quantity: 1000, Price: 12000, Every: 1, Unit: "year"},
-		{SubscriptionID: 3, ContactID: bob, Start: jan, End: ptr(day("2025-06-10")), ItemStart: jan, Quantity: 2000, Discount: 5000, Price: 500, Every: 1, Unit: "month"},
+		{SubscriptionID: 1, ContactID: alice, Start: jan, ItemStart: jan, Quantity: 1000, Price: money.FromAmount(1000), Every: 1, Unit: "month"},
+		{SubscriptionID: 2, ContactID: alice, Start: jan, ItemStart: jan, Quantity: 1000, Price: money.FromAmount(12000), Every: 1, Unit: "year"},
+		{SubscriptionID: 3, ContactID: bob, Start: jan, End: ptr(day("2025-06-10")), ItemStart: jan, Quantity: 2000, Discount: 5000, Price: money.FromAmount(500), Every: 1, Unit: "month"},
 	}
 	r, err := f.Subscriptions(ctx, adminID, owner, "this_month")
 	if err != nil {

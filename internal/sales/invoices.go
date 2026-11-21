@@ -416,7 +416,7 @@ func (s *Service) applyDetails(ctx context.Context, admin, user resource.ID, inv
 			d.Period = strings.TrimSpace(*in.Period)
 		}
 		if in.Price != nil {
-			p, err := money.ParseAmount(*in.Price)
+			p, err := money.ParseUnitPrice(*in.Price)
 			if err != nil {
 				verr.Add(field+".price", "is not an amount")
 			} else {

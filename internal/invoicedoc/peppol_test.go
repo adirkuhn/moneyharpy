@@ -150,7 +150,7 @@ func peppolCases(t *testing.T) map[string]sales.Document {
 		return doc
 	}
 	line := func(price money.Amount, qty int64, rate resource.ID) sales.Detail {
-		return sales.Detail{Description: "Consultancy", Amount: "1", Quantity: qty, Price: price, TaxRateID: rate, Selected: true}
+		return sales.Detail{Description: "Consultancy", Amount: "1", Quantity: qty, Price: money.FromAmount(price), TaxRateID: rate, Selected: true}
 	}
 	cases := map[string]sales.Document{}
 	cases["domestic"] = base()

@@ -642,16 +642,20 @@ func TestAResumedStepKeepsCountingWhatItImported(t *testing.T) {
 }
 
 func TestAPriceComesInAsAnAmount(t *testing.T) {
-	for in, want := range map[mbDecimal]string{"12.5": "12.5", "12.5000": "12.50", "-3.10": "-3.10", "1.0E2": "100.00"} {
+	// Moneybird returns up to six decimals, such as 8.985 or 345.12785.
+	for in, want := range map[mbDecimal]string{
+		"12.5": "12.5", "12.5000": "12.5", "-3.10": "-3.1", "1.0E2": "100.0",
+		"8.985": "8.985", "345.12785": "345.12785", "0.0825": "0.0825", "1.5E-3": "0.0015",
+	} {
 		got, err := price(in, 2)
 		if err != nil || got != want {
 			t.Errorf("price(%q) = %q, %v; want %q", in, got, err, want)
 		}
 	}
 	// One the import cannot read says what it was.
-	_, err := price("0.0825", 2)
+	_, err := price("0.0000001", 2)
 	var verr *resource.ValidationError
-	if !errors.As(err, &verr) || !strings.Contains(describe(err), `details_attributes.2.price: is not an amount: "0.0825"`) {
+	if !errors.As(err, &verr) || !strings.Contains(describe(err), `details_attributes.2.price: is not an amount: "0.0000001"`) {
 		t.Errorf("err = %v", err)
 	}
 }

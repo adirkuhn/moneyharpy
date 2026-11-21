@@ -145,7 +145,7 @@ type SubscriptionItem struct {
 	Quantity int64
 	Discount int64
 	// Price is the product's price per Every Unit.
-	Price money.Amount
+	Price money.UnitPrice
 	Every int
 	Unit  string
 }
