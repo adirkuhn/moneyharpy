@@ -93,6 +93,16 @@ func FormatMoney(a money.Amount, currency, language string) string {
 	return symbol + text
 }
 
+// FormatUnitPrice writes a unit price as FormatMoney does, with the decimals
+// it has beyond the cents: "€ 0,0825".
+func FormatUnitPrice(p money.UnitPrice, currency, language string) string {
+	if p < 0 {
+		return "-" + FormatUnitPrice(-p, currency, language)
+	}
+	_, frac, _ := strings.Cut(p.Decimal(), ".")
+	return FormatMoney(money.Amount(p/10_000), currency, language) + frac[2:]
+}
+
 func itoa(n int64) string {
 	if n == 0 {
 		return "0"

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"github.com/adirkuhn/moneyharpy/internal/money"
 	"io"
 	"slices"
 	"strings"
@@ -156,7 +157,7 @@ func TestCreateTakesDefaultsAndValidates(t *testing.T) {
 	s, _ := newService()
 	ctx := context.Background()
 	p := create(t, s, Changes{Description: ptr("Geldvogel"), TaxRateID: ptr(vat21), Identifier: ptr("GV-1"), FrequencyPreset: ptr("3:month")})
-	if p.Price != 5050 || p.Currency != "EUR" || !p.Active || *p.TaxRateID != vat21 || p.Frequency != 3 || p.FrequencyType != "month" || p.LineDescription() != "Geldvogel" {
+	if p.Price != money.FromAmount(5050) || p.Currency != "EUR" || !p.Active || *p.TaxRateID != vat21 || p.Frequency != 3 || p.FrequencyType != "month" || p.LineDescription() != "Geldvogel" {
 		t.Errorf("created = %+v", p)
 	}
 	if p.Ref().URI() != "/1/products/"+p.ID.String() {
@@ -199,7 +200,7 @@ func TestUpdateFrequencyAndActive(t *testing.T) {
 		t.Errorf("frequency = %d", p.Frequency)
 	}
 	up, err := s.Update(ctx, adminID, p.ID, owner, Changes{FrequencyPreset: ptr("0:nil"), Price: ptr("12.5"), Active: ptr(false), TaxRateID: ptr(resource.ID(0))})
-	if err != nil || up.Frequency != 0 || up.FrequencyType != "" || up.Price != 1250 || up.Active || up.TaxRateID != nil || !up.UpdatedAt.Equal(now) {
+	if err != nil || up.Frequency != 0 || up.FrequencyType != "" || up.Price != money.FromAmount(1250) || up.Active || up.TaxRateID != nil || !up.UpdatedAt.Equal(now) {
 		t.Errorf("updated = %+v, %v", up, err)
 	}
 	if same, err := s.Update(ctx, adminID, p.ID, owner, Changes{FrequencyPreset: ptr("1:custom")}); err != nil || same.FrequencyType != "" {

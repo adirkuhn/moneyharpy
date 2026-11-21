@@ -9570,8 +9570,8 @@ type ProductRequest struct {
 		LedgerAccountId   *FlexibleIdentifier                       `json:"ledger_account_id,omitempty"`
 		MaxAmountPerOrder *ProductRequest_Product_MaxAmountPerOrder `json:"max_amount_per_order,omitempty"`
 
-		// Price An amount of money, such as "10.95" or "-3,5". A number is accepted too.
-		Price       *Money                            `json:"price,omitempty"`
+		// Price The price of one unit, such as "10.95", "-3,5" or "0.0825": up to six decimals, as a price per kWh may need. What a line comes to is rounded to the cent. A number is accepted too.
+		Price       *UnitPrice                        `json:"price,omitempty"`
 		ProductType *ProductRequestProductProductType `json:"product_type,omitempty"`
 
 		// TaxRateId An id as a string or a number; an empty string clears it.
@@ -9738,8 +9738,8 @@ type PurchaseDetailInput struct {
 	// Period The days the line is about, as yyyymmdd..yyyymmdd; empty clears it.
 	Period *string `json:"period,omitempty"`
 
-	// Price An amount of money, such as "10.95" or "-3,5". A number is accepted too.
-	Price *Money `json:"price,omitempty"`
+	// Price The price of one unit, such as "10.95", "-3,5" or "0.0825": up to six decimals, as a price per kWh may need. What a line comes to is rounded to the cent. A number is accepted too.
+	Price *UnitPrice `json:"price,omitempty"`
 
 	// ProductId An id as a string or a number; an empty string clears it.
 	ProductId *FlexibleIdentifier `json:"product_id,omitempty"`
@@ -10726,8 +10726,8 @@ type SalesInvoiceDetailInput struct {
 	// Period The days the line is about, as yyyymmdd..yyyymmdd; empty clears it.
 	Period *string `json:"period,omitempty"`
 
-	// Price An amount of money, such as "10.95" or "-3,5". A number is accepted too.
-	Price *Money `json:"price,omitempty"`
+	// Price The price of one unit, such as "10.95", "-3,5" or "0.0825": up to six decimals, as a price per kWh may need. What a line comes to is rounded to the cent. A number is accepted too.
+	Price *UnitPrice `json:"price,omitempty"`
 
 	// ProductId An id as a string or a number; an empty string clears it.
 	ProductId *FlexibleIdentifier `json:"product_id,omitempty"`
@@ -11698,6 +11698,17 @@ type TypelessDocumentRequest struct {
 		Reference *string             `json:"reference,omitempty"`
 	} `json:"typeless_document"`
 }
+
+// UnitPrice The price of one unit, such as "10.95", "-3,5" or "0.0825": up to six decimals, as a price per kWh may need. What a line comes to is rounded to the cent. A number is accepted too.
+type UnitPrice struct {
+	union json.RawMessage
+}
+
+// UnitPrice0 defines model for UnitPrice.0.
+type UnitPrice0 = string
+
+// UnitPrice1 defines model for UnitPrice.1.
+type UnitPrice1 = float32
 
 // UnlinkBookingRequest defines model for UnlinkBookingRequest.
 type UnlinkBookingRequest struct {
@@ -20530,6 +20541,68 @@ func (t TypelessDocument_Contact) MarshalJSON() ([]byte, error) {
 }
 
 func (t *TypelessDocument_Contact) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsUnitPrice0 returns the union data inside the UnitPrice as a UnitPrice0
+func (t UnitPrice) AsUnitPrice0() (UnitPrice0, error) {
+	var body UnitPrice0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromUnitPrice0 overwrites any union data inside the UnitPrice as the provided UnitPrice0
+func (t *UnitPrice) FromUnitPrice0(v UnitPrice0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeUnitPrice0 performs a merge with any union data inside the UnitPrice, using the provided UnitPrice0
+func (t *UnitPrice) MergeUnitPrice0(v UnitPrice0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsUnitPrice1 returns the union data inside the UnitPrice as a UnitPrice1
+func (t UnitPrice) AsUnitPrice1() (UnitPrice1, error) {
+	var body UnitPrice1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromUnitPrice1 overwrites any union data inside the UnitPrice as the provided UnitPrice1
+func (t *UnitPrice) FromUnitPrice1(v UnitPrice1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeUnitPrice1 performs a merge with any union data inside the UnitPrice, using the provided UnitPrice1
+func (t *UnitPrice) MergeUnitPrice1(v UnitPrice1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t UnitPrice) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *UnitPrice) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }

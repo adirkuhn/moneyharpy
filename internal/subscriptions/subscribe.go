@@ -369,8 +369,8 @@ func (s *Service) lineFor(r *sales.Recurring, p products.Product, sub Subscripti
 
 // periodValue is what one period of the item costs: price times quantity
 // less the discount.
-func periodValue(price money.Amount, quantity, discount int64) int64 {
-	gross := int64(price) * quantity / 1000
+func periodValue(price money.UnitPrice, quantity, discount int64) int64 {
+	gross := int64(price.Times(quantity))
 	return gross * (10000 - discount) / 10000
 }
 

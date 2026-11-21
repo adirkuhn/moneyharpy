@@ -11,7 +11,7 @@ import { type Confidence, leastSure, Remark } from '../forms/Remark'
 import { applyBelow, moveRow, periodText } from '../invoices/details'
 import { type DetailRow, DetailsEditor } from '../invoices/DetailsEditor'
 import { StateBadge } from '../invoices/StateBadge'
-import { chargedRate, computeTotals, parseCents, parseQuantity, vatRows } from '../invoices/totals'
+import { chargedRate, computeTotals, lineCents, parseCents, parseQuantity, parseUnitPrice, vatRows } from '../invoices/totals'
 import { type TotalRow } from '../invoices/TotalsTable'
 import { ListIcon } from '../layout/icons'
 import { Loading } from '../layout/Loading'
@@ -281,7 +281,6 @@ const blank = (taxRateId: string, over: Partial<DetailRow> = {}): DetailRow => (
 const priceText = (p: string | number | undefined | null) => (p === undefined || p === null || p === '' ? '' : String(Number(p)))
 const isBlank = (r: DetailRow) => !r.id && !r.description.trim() && !r.price.trim()
 /** A line's amount times its price, in cents, as the Total column shows it. */
-const grossCents = (price: number, quantity: number) => Math.sign(price * quantity) * Math.round(Math.abs(price * quantity) / 1000)
 
 type LinesProps = Loaded & {
   remarks: Remarks
@@ -318,10 +317,10 @@ function PurchaseLines({ administrationId, kind, doc, rates, accounts, remarks, 
   })
   const [removed, setRemoved] = useState<string[]>([])
 
-  const parsed = rows.map((r) => ({ price: parseCents(r.price), quantity: parseQuantity(r.amount) }))
+  const parsed = rows.map((r) => ({ price: parseUnitPrice(r.price), quantity: parseQuantity(r.amount) }))
   const rateOf = (id: string) => rates.find((r) => r.id === id)
   const totals = computeTotals(
-    rows.map((r, i) => ({ price: parsed[i]?.price ?? 0, quantity: parsed[i]?.quantity ?? 0, taxRateId: r.tax_rate_id, rate: chargedRate(rateOf(r.tax_rate_id)) })),
+    rows.map((r, i) => ({ unitPrice: parsed[i]?.price ?? 0, quantity: parsed[i]?.quantity ?? 0, taxRateId: r.tax_rate_id, rate: chargedRate(rateOf(r.tax_rate_id)) })),
     0,
     inclTax,
   )
@@ -399,7 +398,7 @@ function PurchaseLines({ administrationId, kind, doc, rates, accounts, remarks, 
         pricesInclTax={inclTax}
         onPricesInclTax={setInclTax}
         onCurrency={setCurrency}
-        lineTotals={parsed.map((p) => grossCents(p.price ?? 0, p.quantity ?? 0))}
+        lineTotals={parsed.map((p) => lineCents(p.price ?? 0, p.quantity ?? 0))}
         invalid={parsed.map((p) => ({ price: p.price === null, amount: p.quantity === null }))}
         totals={totalRows}
         discount=""

@@ -3,6 +3,7 @@ package postgres_test
 import (
 	"context"
 	"errors"
+	"github.com/adirkuhn/moneyharpy/internal/money"
 	"testing"
 
 	"github.com/adirkuhn/moneyharpy/internal/journal"
@@ -23,7 +24,7 @@ func TestProductsRoundTripAndStayWhileInUse(t *testing.T) {
 		t.Fatal(err)
 	}
 	got, err := f.products.Product(ctx, f.admin, p.ID, f.owner)
-	if err != nil || got.Price != 2500 || got.Frequency != 1 || got.FrequencyType != "month" || *got.TaxRateID != f.vat21 || got.ProductType != "product" ||
+	if err != nil || got.Price != money.FromAmount(2500) || got.Frequency != 1 || got.FrequencyType != "month" || *got.TaxRateID != f.vat21 || got.ProductType != "product" ||
 		*got.MaxAmountPerOrder != 1 || !got.Active || got.Currency != "EUR" {
 		t.Fatalf("Product() = %+v, %v", got, err)
 	}
@@ -54,7 +55,7 @@ func TestProductsRoundTripAndStayWhileInUse(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if stored, _ := f.svc.Invoice(ctx, f.admin, inv.ID, f.owner); *stored.Lines[0].ProductID != p.ID || stored.Lines[0].Description != "Widget, blue" || stored.Lines[0].Price != 2500 {
+	if stored, _ := f.svc.Invoice(ctx, f.admin, inv.ID, f.owner); *stored.Lines[0].ProductID != p.ID || stored.Lines[0].Description != "Widget, blue" || stored.Lines[0].Price != money.FromAmount(2500) {
 		t.Errorf("line = %+v", stored.Lines[0])
 	}
 	if kept, err := f.products.Delete(ctx, f.admin, p.ID, f.owner); err != nil || !kept {

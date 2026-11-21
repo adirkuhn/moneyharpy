@@ -249,7 +249,7 @@ func (s *RecognitionStore) History(ctx context.Context, admin, contact resource.
 	}
 	for _, l := range lines {
 		d := &docs[at[l.PurchaseDocumentID]]
-		line := sales.Detail{Description: l.Description, Price: money.Amount(l.Price), TaxRateID: resource.ID(l.TaxRateID)}
+		line := sales.Detail{Description: l.Description, Price: money.UnitPrice(l.Price), TaxRateID: resource.ID(l.TaxRateID)}
 		if l.LedgerAccountID.Valid {
 			id := resource.ID(l.LedgerAccountID.Int64)
 			line.LedgerAccountID = &id

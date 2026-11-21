@@ -8589,6 +8589,8 @@ export interface components {
         };
         /** @description An amount of money, such as "10.95" or "-3,5". A number is accepted too. */
         Money: string | number;
+        /** @description The price of one unit, such as "10.95", "-3,5" or "0.0825": up to six decimals, as a price per kWh may need. What a line comes to is rounded to the cent. A number is accepted too. */
+        UnitPrice: string | number;
         /** @enum {string} */
         FinancialAccountType: "BankAccount" | "CashAccount" | "CreditCardAccount" | "PaymentServiceAccount" | "CustomAccount";
         /** @description MoneyHarpy extension. */
@@ -9048,7 +9050,7 @@ export interface components {
             description?: string;
             /** @description The days the line is about, as yyyymmdd..yyyymmdd; empty clears it. */
             period?: string;
-            price?: components["schemas"]["Money"];
+            price?: components["schemas"]["UnitPrice"];
             /** @description The quantity, such as "2" or "1,5 hours"; it must start with a number. */
             amount?: string | number;
             tax_rate_id?: components["schemas"]["FlexibleIdentifier"];
@@ -9833,7 +9835,7 @@ export interface components {
                 description?: string;
                 /** @description Accepted and kept; MoneyHarpy has no online checkout. */
                 checkout_description?: string;
-                price?: components["schemas"]["Money"];
+                price?: components["schemas"]["UnitPrice"];
                 document_style_id?: components["schemas"]["FlexibleIdentifier"];
                 ledger_account_id?: components["schemas"]["FlexibleIdentifier"];
                 tax_rate_id?: components["schemas"]["FlexibleIdentifier"];
@@ -10030,7 +10032,7 @@ export interface components {
             description?: string;
             /** @description The days the line is about, as yyyymmdd..yyyymmdd; empty clears it. */
             period?: string;
-            price?: components["schemas"]["Money"];
+            price?: components["schemas"]["UnitPrice"];
             /** @description The quantity, such as "2" or "1,5 hours"; it must start with a number. */
             amount?: string | number;
             tax_rate_id?: components["schemas"]["FlexibleIdentifier"];

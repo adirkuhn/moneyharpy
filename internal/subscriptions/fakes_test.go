@@ -59,11 +59,11 @@ func (fakeProducts) Product(_ context.Context, _, id, _ resource.ID) (products.P
 	rate := vat21
 	switch id {
 	case monthly:
-		return products.Product{ID: monthly, Description: "Hosting", Price: 2000, Frequency: 1, FrequencyType: "month", TaxRateID: &rate, Active: true}, nil
+		return products.Product{ID: monthly, Description: "Hosting", Price: money.FromAmount(2000), Frequency: 1, FrequencyType: "month", TaxRateID: &rate, Active: true}, nil
 	case premium:
-		return products.Product{ID: premium, Description: "Premium hosting", Price: 3000, Frequency: 1, FrequencyType: "month", TaxRateID: &rate, Active: true}, nil
+		return products.Product{ID: premium, Description: "Premium hosting", Price: money.FromAmount(3000), Frequency: 1, FrequencyType: "month", TaxRateID: &rate, Active: true}, nil
 	case oneOff:
-		return products.Product{ID: oneOff, Description: "Setup", Price: 5000, TaxRateID: &rate, Active: true}, nil
+		return products.Product{ID: oneOff, Description: "Setup", Price: money.FromAmount(5000), TaxRateID: &rate, Active: true}, nil
 	}
 	return products.Product{}, products.ErrNotFound
 }
@@ -100,7 +100,7 @@ func (f *fakeSales) lines(existing []sales.Detail, in []sales.DetailInput) []sal
 			line.Description = *d.Description
 		}
 		if d.Price != nil {
-			line.Price, _ = money.ParseAmount(*d.Price)
+			line.Price, _ = money.ParseUnitPrice(*d.Price)
 		}
 		if d.Amount != nil {
 			line.Amount = *d.Amount

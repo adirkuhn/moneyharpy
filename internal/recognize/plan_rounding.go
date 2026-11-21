@@ -44,7 +44,7 @@ func fitPrintedTotal(lines []line, rates []lineRate, all []bookkeeping.TaxRate, 
 		if err != nil || !known || l.reverse {
 			return nil, false
 		}
-		sl[i] = sales.Line{Price: l.price, Quantity: qty, TaxRateID: rates[i].id, Rate: bp, Selected: true}
+		sl[i] = sales.Line{Price: money.FromAmount(l.price), Quantity: qty, TaxRateID: rates[i].id, Rate: bp, Selected: true}
 	}
 	booked := sales.Compute(sl, 0, false).InclTax
 	if booked == total || !near(booked, total, maxRoundingGap) {
@@ -61,7 +61,7 @@ func fitPrintedTotal(lines []line, rates []lineRate, all []bookkeeping.TaxRate, 
 		}
 	}
 	for i := range sl {
-		sl[i].Price = out[i].price
+		sl[i].Price = money.FromAmount(out[i].price)
 	}
 	if sales.Compute(sl, 0, true).InclTax != total {
 		return nil, false
@@ -108,7 +108,7 @@ func priceInclVAT(lines []line, sl []sales.Line, id resource.ID, target money.Am
 		if l.TaxRateID != id {
 			continue
 		}
-		price := money.Amount(divRound(int64(l.Price)*(10000+l.Rate), 10000))
+		price := money.Amount(divRound(int64(lines[i].price)*(10000+l.Rate), 10000))
 		lines[i].price = price
 		sum += money.Amount(divRound(int64(price)*l.Quantity, 1000))
 		if l.Quantity == 1000 {

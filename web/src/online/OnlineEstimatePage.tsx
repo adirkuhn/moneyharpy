@@ -11,6 +11,7 @@ import { formErrors, TextInput } from '../forms/Form'
 import { type Signature, SignaturePad } from '../forms/SignaturePad'
 import { Loading } from '../layout/Loading'
 import './online.css'
+import { formatUnitPrice } from '../invoices/totals'
 
 type OnlineEstimate = components['schemas']['OnlineEstimate']
 
@@ -104,7 +105,7 @@ export function OnlineEstimatePage() {
               <tr key={i}>
                 <td className="num">{d.amount}</td>
                 <td className="online-document__description">{d.description}</td>
-                <td className="num">{money(d.price)}</td>
+                <td className="num">{formatUnitPrice(d.price, e.currency, e.language || i18n.language)}</td>
                 <td className="num">{money(d.total_price_excl_tax_with_discount)}</td>
                 <td className="num">{d.tax_percentage}%</td>
               </tr>

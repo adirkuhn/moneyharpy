@@ -52,7 +52,7 @@ func limit(page, perPage int) (pgtype.Int4, int32) {
 func toProduct(r sqlc.Product) products.Product {
 	return products.Product{
 		ID: resource.ID(r.ID), AdministrationID: resource.ID(r.AdministrationID), Title: r.Title, Description: r.Description,
-		CheckoutDescription: r.CheckoutDescription, Identifier: r.Identifier, Price: money.Amount(r.Price), Currency: r.Currency,
+		CheckoutDescription: r.CheckoutDescription, Identifier: r.Identifier, Price: money.UnitPrice(r.Price), Currency: r.Currency,
 		Frequency: int(r.FrequencyCount), FrequencyType: r.FrequencyType, TaxRateID: idOf(r.TaxRateID), LedgerAccountID: resource.ID(r.LedgerAccountID),
 		DocumentStyleID: idOf(r.DocumentStyleID), WorkflowID: idOf(r.WorkflowID), ProductType: r.ProductType, VatRateType: r.VatRateType,
 		CheckoutType: r.CheckoutType, MaxAmountPerOrder: intOf(r.MaxAmountPerOrder), Active: r.Active, CreatedAt: r.CreatedAt.Time, UpdatedAt: r.UpdatedAt.Time,

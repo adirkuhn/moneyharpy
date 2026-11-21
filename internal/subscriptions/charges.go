@@ -75,7 +75,7 @@ func (s *Service) AddCharge(ctx context.Context, admin, user resource.ID, o Owne
 	}
 	now := s.now()
 	c := Charge{
-		ID: s.ids.Next(), AdministrationID: admin, ContactID: o.ContactID, SubscriptionID: o.SubscriptionID, ProductID: p.ID, Price: p.Price,
+		ID: s.ids.Next(), AdministrationID: admin, ContactID: o.ContactID, SubscriptionID: o.SubscriptionID, ProductID: p.ID, Price: p.Price.Times(1000),
 		Description: strings.TrimSpace(in.Description), CreatedAt: now, UpdatedAt: now,
 	}
 	var verr resource.ValidationError

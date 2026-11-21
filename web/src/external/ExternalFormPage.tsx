@@ -16,7 +16,7 @@ import { type DetailRow, DetailsEditor } from '../invoices/DetailsEditor'
 import { AttachmentDropZone } from '../invoices/InvoiceExtras'
 import { detailOf, type NewEntity } from '../invoices/newEntity'
 import { today } from '../invoices/queries'
-import { computeTotals, parseCents, parseQuantity } from '../invoices/totals'
+import { computeTotals, parseQuantity, parseUnitPrice } from '../invoices/totals'
 import { ListIcon } from '../layout/icons'
 import { Loading } from '../layout/Loading'
 import { NotFoundPage } from '../layout/NotFoundPage'
@@ -120,9 +120,9 @@ function Form({ administrationId, invoice, rates, currency: startCurrency }: Pro
 
   const due = dueMode === 'days' ? (daysAfter(date, days) ?? dueDate) : dueDate
   const percentage = (rateId: string) => Math.round(Number(rates.find((r) => r.id === rateId)?.percentage ?? 0) * 100)
-  const parsed = rows.map((r) => ({ price: parseCents(r.price), quantity: parseQuantity(r.amount) }))
+  const parsed = rows.map((r) => ({ price: parseUnitPrice(r.price), quantity: parseQuantity(r.amount) }))
   const totals = computeTotals(
-    rows.map((r, i) => ({ price: parsed[i]?.price ?? 0, quantity: parsed[i]?.quantity ?? 0, taxRateId: r.tax_rate_id, rate: percentage(r.tax_rate_id) })),
+    rows.map((r, i) => ({ unitPrice: parsed[i]?.price ?? 0, quantity: parsed[i]?.quantity ?? 0, taxRateId: r.tax_rate_id, rate: percentage(r.tax_rate_id) })),
     0,
     inclTax,
   )

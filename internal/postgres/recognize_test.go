@@ -191,7 +191,7 @@ func TestSupplierHistoryHoldsTheMostRecentBookedDocuments(t *testing.T) {
 		d.Date.Format(time.DateOnly) != "2026-10-03" || d.UpdatedAt.IsZero() || len(d.Lines) != 1 {
 		t.Fatalf("document = %+v", d)
 	}
-	if l := d.Lines[0]; l.Description != "Paper" || l.Price != 1000 || l.TaxRateID != f.vat21 || l.LedgerAccountID == nil || *l.LedgerAccountID != f.costs {
+	if l := d.Lines[0]; l.Description != "Paper" || l.Price != money.FromAmount(1000) || l.TaxRateID != f.vat21 || l.LedgerAccountID == nil || *l.LedgerAccountID != f.costs {
 		t.Errorf("line = %+v", l)
 	}
 	if receipts, err := store.History(ctx, f.admin, f.supplier, purchases.Receipt, 20); err != nil || len(receipts) != 1 {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { chargedRate, computeTotals, parseCents, parsePercentage, parseQuantity, vatRows } from './totals'
+import { chargedRate, computeTotals, formatUnitPrice, parseCents, parsePercentage, parseQuantity, parseUnitPrice, vatRows } from './totals'
 
 describe('reading what people type', () => {
   it('reads prices like the server, in cents', () => {
@@ -9,6 +9,22 @@ describe('reading what people type', () => {
     expect(parseCents('')).toBe(0)
     expect(parseCents('1.000,50')).toBeNull()
     expect(parseCents('abc')).toBeNull()
+  })
+
+  it('reads a unit price in millionths, up to six decimals as Moneybird keeps it', () => {
+    expect(parseUnitPrice('12,5')).toBe(12_500_000)
+    expect(parseUnitPrice('8.985')).toBe(8_985_000)
+    expect(parseUnitPrice('-0.0825')).toBe(-82_500)
+    expect(parseUnitPrice('345.12785')).toBe(345_127_850)
+    expect(parseUnitPrice('')).toBe(0)
+    expect(parseUnitPrice('0.0000001')).toBeNull()
+    expect(parseUnitPrice('abc')).toBeNull()
+  })
+
+  it('shows a unit price with its cents and any decimals beyond them', () => {
+    expect(formatUnitPrice('8.985', 'EUR', 'en')).toBe('€8.985')
+    expect(formatUnitPrice('12.5', 'EUR', 'en')).toBe('€12.50')
+    expect(formatUnitPrice('0.0825', 'EUR', 'nl')).toBe('€\u00a00,0825')
   })
 
   it('reads the number in front of a quantity, in thousandths', () => {
@@ -30,8 +46,14 @@ describe('invoice totals', () => {
   const vat21 = { taxRateId: '1', rate: 2100 }
   const vat9 = { taxRateId: '2', rate: 900 }
 
+  it('rounds what a line with a long price comes to, to the cent', () => {
+    // 3 × 8.985 = 26.955, which comes to 26.96; a billion at six decimals stays exact.
+    expect(computeTotals([{ unitPrice: 8_985_000, quantity: 3000, taxRateId: '1', rate: 0 }], 0, false).lines).toEqual([2696])
+    expect(computeTotals([{ unitPrice: 999_999_999_999_999, quantity: 3000, taxRateId: '1', rate: 0 }], 0, false).lines).toEqual([300_000_000_000])
+  })
+
   it('adds VAT per rate on the summed lines', () => {
-    const t = computeTotals([{ price: 10000, quantity: 2000, ...vat21 }, { price: 5000, quantity: 1000, ...vat9 }], 0, false)
+    const t = computeTotals([{ unitPrice: 100000000, quantity: 2000, ...vat21 }, { unitPrice: 50000000, quantity: 1000, ...vat9 }], 0, false)
     expect(t.subtotal).toBe(25000)
     expect(t.byRate).toEqual([{ taxRateId: '1', taxable: 20000, tax: 4200 }, { taxRateId: '2', taxable: 5000, tax: 450 }])
     expect(t.inclTax).toBe(29650)
@@ -40,7 +62,7 @@ describe('invoice totals', () => {
 
   it('takes the discount off each line before VAT', () => {
     // 3 x 33.33 = 99.99, 10% discount = 89.99, 21% VAT = 18.90.
-    const t = computeTotals([{ price: 3333, quantity: 3000, ...vat21 }], 1000, false)
+    const t = computeTotals([{ unitPrice: 33330000, quantity: 3000, ...vat21 }], 1000, false)
     expect(t.discount).toBe(1000)
     expect(t.exclTax).toBe(8999)
     expect(t.tax).toBe(1890)
@@ -48,13 +70,13 @@ describe('invoice totals', () => {
   })
 
   it('takes VAT out of prices that include it', () => {
-    const t = computeTotals([{ price: 6050, quantity: 1000, ...vat21 }, { price: 6050, quantity: 1000, ...vat21 }], 0, true)
+    const t = computeTotals([{ unitPrice: 60500000, quantity: 1000, ...vat21 }, { unitPrice: 60500000, quantity: 1000, ...vat21 }], 0, true)
     expect(t.byRate).toEqual([{ taxRateId: '1', taxable: 10000, tax: 2100 }])
     expect(t.inclTax).toBe(12100)
   })
 
   it('rounds credits away from zero', () => {
-    const t = computeTotals([{ price: 3333, quantity: -3000, ...vat21 }], 1000, false)
+    const t = computeTotals([{ unitPrice: 33330000, quantity: -3000, ...vat21 }], 1000, false)
     expect(t.inclTax).toBe(-10889)
   })
 })
@@ -82,7 +104,7 @@ describe('vatRows', () => {
   })
 
   it('leaves reverse-charged VAT out of what the lines add up to', () => {
-    const totals = computeTotals([{ price: 379531, quantity: 1000, taxRateId: 'eu9', rate: chargedRate(rates[1]) }], 0, false)
+    const totals = computeTotals([{ unitPrice: 3795310000, quantity: 1000, taxRateId: 'eu9', rate: chargedRate(rates[1]) }], 0, false)
     expect(totals.inclTax).toBe(379531)
     expect(chargedRate(rates[0])).toBe(2100)
   })

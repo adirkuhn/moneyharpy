@@ -390,24 +390,21 @@ func day(s *string) *time.Time {
 	return &t
 }
 
-// price writes a line's price as an amount here: in cents, which Moneybird
-// keeps it in too, however it writes it, such as "12.5000". One that is not
-// a whole number of cents fails its record, saying what it was.
+// price writes a line's price as a unit price here, up to six decimals as
+// Moneybird keeps it, however it writes it, such as "12.5000" or 1.0E2.
+// One with more fails its record, saying what it was.
 func price(in mbDecimal, line int) (string, error) {
 	s := strings.TrimSpace(string(in))
 	if s == "" {
 		return "", nil
 	}
-	if _, err := money.ParseAmount(s); err == nil {
-		return s, nil
+	if p, err := money.ParseUnitPrice(s); err == nil {
+		return p.String(), nil
 	}
+	// Written as a number, such as 1.0E2: the same up to six decimals.
 	if r, ok := new(big.Rat).SetString(s); ok {
-		if cents := new(big.Rat).Mul(r, big.NewRat(100, 1)); cents.IsInt() && cents.Num().IsInt64() {
-			c, sign := cents.Num().Int64(), ""
-			if c < 0 {
-				c, sign = -c, "-"
-			}
-			return fmt.Sprintf("%s%d.%02d", sign, c/100, c%100), nil
+		if p, err := money.ParseUnitPrice(r.FloatString(6)); err == nil && r.Cmp(new(big.Rat).SetFrac64(int64(p), 1_000_000)) == 0 {
+			return p.String(), nil
 		}
 	}
 	var verr resource.ValidationError

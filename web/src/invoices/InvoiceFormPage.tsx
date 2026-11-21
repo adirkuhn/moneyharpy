@@ -25,7 +25,7 @@ import { addDays, addressLines, documentDate, percentText, senderEntries, today,
 import { invoiceTitle, type SalesInvoice, type SalesInvoiceChanges, useNextDraftId, useSaveSalesInvoice } from './queries'
 import { type RecurringChanges, type RecurringInvoice, useSaveRecurringInvoice } from '../recurring/queries'
 import { type Estimate, type EstimateChanges, estimateTitle, useNextEstimateDraftId, useSaveEstimate } from '../estimates/queries'
-import { computeTotals, parseCents, parsePercentage, parseQuantity } from './totals'
+import { computeTotals, formatUnitPrice, lineCents, parsePercentage, parseQuantity, parseUnitPrice } from './totals'
 import { type TotalRow, TotalsTable } from './TotalsTable'
 import './editor.css'
 
@@ -188,7 +188,6 @@ const priceText = (p: string | undefined) => (p === undefined || p === '' ? '' :
 /** A detail nobody typed in yet is not shown on the document, nor sent. */
 const isBlank = (r: DetailRow) => !r.id && !r.description.trim() && !r.price.trim()
 /** A detail's amount times its price, in cents, before any discount over the total, as the editor's Total column shows it. */
-const grossCents = (price: number, quantity: number) => Math.sign(price * quantity) * Math.round(Math.abs(price * quantity) / 1000)
 
 const chosen = (c: Pick<Contact, 'id' | 'company_name' | 'firstname' | 'lastname' | 'address1' | 'address2' | 'zipcode' | 'city'>): ChosenContact =>
   ({ id: String(c.id ?? ''), name: contactName(c), address: addressLines(c) })
@@ -355,12 +354,12 @@ function InvoiceForm(props: FormProps) {
   const money = (cents: number) => formatAmount(cents / 100, currency, language)
   const uiMoney = (cents: number) => formatAmount(cents / 100, currency, i18n.language)
 
-  const parsed = rows.map((r) => ({ price: parseCents(r.price), quantity: parseQuantity(r.amount) }))
+  const parsed = rows.map((r) => ({ price: parseUnitPrice(r.price), quantity: parseQuantity(r.amount) }))
   const rateOf = (id: string) => rates.find((r) => r.id === id)
   const percentage = (id: string) => Math.round(Number(rateOf(id)?.percentage ?? 0) * 100)
   const discountValue = parsePercentage(discount)
   const totals = computeTotals(
-    rows.map((r, i) => ({ price: parsed[i]?.price ?? 0, quantity: parsed[i]?.quantity ?? 0, taxRateId: r.tax_rate_id, rate: percentage(r.tax_rate_id) })),
+    rows.map((r, i) => ({ unitPrice: parsed[i]?.price ?? 0, quantity: parsed[i]?.quantity ?? 0, taxRateId: r.tax_rate_id, rate: percentage(r.tax_rate_id) })),
     discountValue ?? 0,
     pricesInclTax,
   )
@@ -548,7 +547,7 @@ function InvoiceForm(props: FormProps) {
     isBlank(r)
       ? []
       : [{
-          quantity: quantityLabel(r.amount), description: r.description, price: money(parsed[i]?.price ?? 0),
+          quantity: quantityLabel(r.amount), description: r.description, price: formatUnitPrice((parsed[i]?.price ?? 0) / 1_000_000, currency, language),
           total: money(totals.lines[i] ?? 0), vat: percentText(rateOf(r.tax_rate_id)?.percentage),
         }],
   )
@@ -689,7 +688,7 @@ function InvoiceForm(props: FormProps) {
                 onPricesInclTax={(inclTax) => change({ inclTax })}
                 onCurrency={(c) => change({ currency: c })}
                 currencyLocked={dated.saved && dated.state !== 'draft'}
-                lineTotals={parsed.map((p) => grossCents(p.price ?? 0, p.quantity ?? 0))}
+                lineTotals={parsed.map((p) => lineCents(p.price ?? 0, p.quantity ?? 0))}
                 invalid={parsed.map((p) => ({ price: p.price === null, amount: p.quantity === null }))}
                 totals={totalRows(t, uiMoney, 'editor')}
                 discount={discount}

@@ -1,6 +1,7 @@
 package recognize
 
 import (
+	"github.com/adirkuhn/moneyharpy/internal/money"
 	"testing"
 	"time"
 
@@ -27,9 +28,9 @@ func TestNormalizeDescription(t *testing.T) {
 func TestMemoryLearnsAndBecomesCertain(t *testing.T) {
 	at := time.Date(2026, 11, 1, 0, 0, 0, 0, time.UTC)
 	doc := purchases.Document{ID: 41, Kind: purchases.Receipt, Currency: "EUR", PricesAreInclTax: true, Lines: []sales.Detail{
-		{Description: "Hosting November 2026", Price: 1000, TaxRateID: 21, LedgerAccountID: ledgerPtr(7)},
-		{Description: "Domain name", Price: 200, TaxRateID: 21, LedgerAccountID: ledgerPtr(8)},
-		{Description: "Not categorised", Price: 9999, TaxRateID: 21},
+		{Description: "Hosting November 2026", Price: money.FromAmount(1000), TaxRateID: 21, LedgerAccountID: ledgerPtr(7)},
+		{Description: "Domain name", Price: money.FromAmount(200), TaxRateID: 21, LedgerAccountID: ledgerPtr(8)},
+		{Description: "Not categorised", Price: money.FromAmount(9999), TaxRateID: 21},
 	}}
 	var m Memory
 	m.Learn(doc, at)
@@ -84,7 +85,7 @@ func TestMemoryLearnsAndBecomesCertain(t *testing.T) {
 func TestRecallFallsBackToTheOtherKindUncertain(t *testing.T) {
 	at := time.Date(2026, 11, 1, 0, 0, 0, 0, time.UTC)
 	receipt := purchases.Document{ID: 51, Kind: purchases.Receipt, Currency: "EUR", PricesAreInclTax: true, Lines: []sales.Detail{
-		{Description: "Coffee beans", Price: 1000, TaxRateID: 9, LedgerAccountID: ledgerPtr(7)},
+		{Description: "Coffee beans", Price: money.FromAmount(1000), TaxRateID: 9, LedgerAccountID: ledgerPtr(7)},
 	}}
 	var m Memory
 	m.Learn(receipt, at)
@@ -109,7 +110,7 @@ func TestRecallFallsBackToTheOtherKindUncertain(t *testing.T) {
 	// description, then the other kind's same description, then their
 	// default.
 	invoice := purchases.Document{ID: 53, Kind: purchases.PurchaseInvoice, Currency: "USD", Lines: []sales.Detail{
-		{Description: "Hosting", Price: 5000, TaxRateID: 21, LedgerAccountID: ledgerPtr(8)},
+		{Description: "Hosting", Price: money.FromAmount(5000), TaxRateID: 21, LedgerAccountID: ledgerPtr(8)},
 	}}
 	m.Learn(invoice, at.Add(2*time.Hour))
 	invoices = m.Recall(KindPurchaseInvoice)
@@ -140,7 +141,7 @@ func TestMemoryForgetsLeastRecentlyUsedLines(t *testing.T) {
 	at := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 	for i := range maxMemoryLines + 5 {
 		desc := "item " + string(rune('a'+i%26)) + string(rune('a'+i/26%26))
-		m.Learn(purchases.Document{Kind: purchases.PurchaseInvoice, Lines: []sales.Detail{{Description: desc, Price: 1, TaxRateID: 1, LedgerAccountID: ledgerPtr(1)}}}, at.Add(time.Duration(i)*time.Minute))
+		m.Learn(purchases.Document{Kind: purchases.PurchaseInvoice, Lines: []sales.Detail{{Description: desc, Price: money.FromAmount(1), TaxRateID: 1, LedgerAccountID: ledgerPtr(1)}}}, at.Add(time.Duration(i)*time.Minute))
 	}
 	if n := len(m.Invoices.Lines); n != maxMemoryLines+1 {
 		t.Errorf("remembered %d lines, want %d plus the default", n, maxMemoryLines)

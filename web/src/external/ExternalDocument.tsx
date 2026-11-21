@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { ContactHoverCard } from '../contacts/ContactHoverCard'
 import { formatAmount } from '../banking/queries'
 import type { TaxRate } from '../bookkeeping/queries'
-import { parseCents, parseQuantity } from '../invoices/totals'
+import { formatUnitPrice, lineCents, parseQuantity, parseUnitPrice } from '../invoices/totals'
 import { type ExternalInvoice, externalTitle } from './queries'
 
 type Props = {
@@ -19,9 +19,9 @@ const percentage = (rate: TaxRate | undefined) => (rate ? `${Number(rate.percent
 
 /** A line's total as typed: its price times its amount, in cents. */
 function lineTotal(price: string | undefined, amount: string | undefined) {
-  const cents = parseCents(String(Number(price ?? 0)))
+  const unitPrice = parseUnitPrice(String(price ?? 0))
   const quantity = parseQuantity(amount ?? '1')
-  return cents === null || quantity === null ? 0 : Math.round((cents * quantity) / 1000)
+  return unitPrice === null || quantity === null ? 0 : lineCents(unitPrice, quantity)
 }
 
 /**
@@ -72,7 +72,7 @@ export function ExternalDocument({ administrationId, invoice: inv, rates, highli
             <tr key={d.id} className={highlight && d.ledger_account_id === highlight ? 'is-highlighted' : undefined}>
               <td className="external-document__amount">{d.amount}</td>
               <td className="external-document__description">{d.description}</td>
-              <td className="external-document__price">{money(d.price)}</td>
+              <td className="external-document__price">{formatUnitPrice(d.price, inv.currency ?? 'EUR', i18n.language)}</td>
               <td className="external-document__price">{money(lineTotal(d.price, d.amount ?? undefined) / 100)}</td>
               <td className="external-document__price">{percentage(rate(d.tax_rate_id))}</td>
             </tr>

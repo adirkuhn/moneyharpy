@@ -31,7 +31,8 @@ var daysPer = map[string]float64{"day": 1, "week": 7}
 
 // monthly is what an item bills per month.
 func (it SubscriptionItem) monthly() float64 {
-	price := float64(it.Price) * float64(it.Quantity) / 1000 * float64(10000-it.Discount) / 10000
+	// In cents: the price is in millionths.
+	price := float64(it.Price) / 10_000 * float64(it.Quantity) / 1000 * float64(10000-it.Discount) / 10000
 	every := float64(max(it.Every, 1))
 	if m, ok := monthsPer[it.Unit]; ok {
 		return price / (m * every)

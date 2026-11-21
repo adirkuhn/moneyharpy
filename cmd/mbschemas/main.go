@@ -46,6 +46,24 @@ var renamed = map[string]string{"identifier": "Identifier", "administration_id":
 // that do not match their own type, which 3.0 validators reject.
 var dropped = []string{"description", "example", "examples", "unevaluatedProperties", "$comment", "title", "default"}
 
+// corrections are the few places where Moneybird's API returns what its
+// spec says it does not, per schema, property and keyword. Each says why.
+var corrections = map[string]map[string]map[string]any{
+	// A line's price has up to six decimals, such as 8.985 or 0.0825 per
+	// kWh: Moneybird returns them so, though its spec allows two.
+	"detail_response": {"price": {"pattern": `^-?\d+\.\d{1,6}$`}},
+}
+
+// correct applies the corrections to a converted schema.
+func correct(name string, s map[string]any) {
+	props, _ := s["properties"].(map[string]any)
+	for prop, fix := range corrections[name] {
+		if p, ok := props[prop].(map[string]any); ok {
+			maps.Copy(p, fix)
+		}
+	}
+}
+
 // branchRules lists, per type, the keywords that belong to that type and move
 // to its branch when a list of types becomes anyOf.
 var branchRules = map[string][]string{
@@ -146,6 +164,7 @@ func schemas(spec map[string]any) (map[string]any, error) {
 		if !ok {
 			return nil, fmt.Errorf("schema %s is not an object", name)
 		}
+		correct(name, s)
 		s["description"] = fmt.Sprintf("Moneybird-compatible %s.", name)
 		out[name] = s
 	}

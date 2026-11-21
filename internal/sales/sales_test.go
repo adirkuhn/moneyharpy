@@ -53,7 +53,7 @@ func TestCreateTakesTheDefaults(t *testing.T) {
 	if inv.Language != "nl" || inv.FirstDueInterval != 14 || inv.Currency != "EUR" || inv.InvoiceID != "" {
 		t.Errorf("workflow defaults = %+v", inv)
 	}
-	if inv.Lines[0].Quantity != 2000 || inv.Lines[0].Price != 10000 || !inv.Lines[0].Selected {
+	if inv.Lines[0].Quantity != 2000 || inv.Lines[0].Price != money.FromAmount(10000) || !inv.Lines[0].Selected {
 		t.Errorf("line = %+v", inv.Lines[0])
 	}
 	if second := draft(t, h); second.DraftID != 2 {
@@ -377,15 +377,15 @@ func TestLinesTakeTheirProductAndProject(t *testing.T) {
 	ctx := context.Background()
 	inv := draft(t, h, DetailInput{ProductID: ptr(widget), ProjectID: ptr(falcon)}, DetailInput{ProductID: ptr(widget), Price: ptr("30"), Description: ptr("Own words")})
 	first, second := inv.Lines[0], inv.Lines[1]
-	if first.Description != "Widget, blue" || first.Price != 2500 || first.TaxRateID != vat21 || *first.LedgerAccountID != consulting || *first.ProductID != widget || *first.ProjectID != falcon {
+	if first.Description != "Widget, blue" || first.Price != money.FromAmount(2500) || first.TaxRateID != vat21 || *first.LedgerAccountID != consulting || *first.ProductID != widget || *first.ProjectID != falcon {
 		t.Errorf("product line = %+v", first)
 	}
-	if second.Description != "Own words" || second.Price != 3000 || second.TaxRateID != vat21 {
+	if second.Description != "Own words" || second.Price != money.FromAmount(3000) || second.TaxRateID != vat21 {
 		t.Errorf("line with its own price = %+v", second)
 	}
 	// Naming the same product again keeps what the line says.
 	up, err := h.svc.Update(ctx, adminID, inv.ID, owner, Changes{Details: []DetailInput{{ID: &first.ID, ProductID: ptr(widget), ProjectID: ptr(resource.ID(0)), Price: ptr("26")}}})
-	if err != nil || up.Lines[0].Price != 2600 || up.Lines[0].ProjectID != nil || *up.Lines[0].ProductID != widget {
+	if err != nil || up.Lines[0].Price != money.FromAmount(2600) || up.Lines[0].ProjectID != nil || *up.Lines[0].ProductID != widget {
 		t.Fatalf("updated = %+v, %v", up.Lines, err)
 	}
 	_, err = h.svc.Create(ctx, adminID, owner, Changes{ContactID: ptr(customer), Details: []DetailInput{
