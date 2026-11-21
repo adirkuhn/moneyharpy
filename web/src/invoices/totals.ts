@@ -17,7 +17,7 @@ export function parseCents(text: string): number | null {
   return m[1] === '-' ? -cents : cents
 }
 
-/** Reads a unit price like the server does, in millionths: "12,5", "8.985" or "-0.0825"; null when it is not one. */
+/** Reads a unit price like the server does, in millionths: "12,5", "2.345" or "-0.0825"; null when it is not one. */
 export function parseUnitPrice(text: string): number | null {
   const s = text.trim().replace(',', '.')
   if (s === '') {
@@ -31,7 +31,7 @@ export function parseUnitPrice(text: string): number | null {
   return m[1] === '-' ? -value : value
 }
 
-/** Shows a unit price in its currency with its cents, and the decimals it has beyond them: "€12.50", "€8.985". */
+/** Shows a unit price in its currency with its cents, and the decimals it has beyond them: "€12.50", "€2.345". */
 export function formatUnitPrice(price: string | number | null | undefined, currency: string, language: string) {
   const value = Number(price ?? 0)
   try {

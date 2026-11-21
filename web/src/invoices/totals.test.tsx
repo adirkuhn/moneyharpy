@@ -13,16 +13,16 @@ describe('reading what people type', () => {
 
   it('reads a unit price in millionths, up to six decimals as Moneybird keeps it', () => {
     expect(parseUnitPrice('12,5')).toBe(12_500_000)
-    expect(parseUnitPrice('8.985')).toBe(8_985_000)
+    expect(parseUnitPrice('2.345')).toBe(2_345_000)
     expect(parseUnitPrice('-0.0825')).toBe(-82_500)
-    expect(parseUnitPrice('345.12785')).toBe(345_127_850)
+    expect(parseUnitPrice('123.45678')).toBe(123_456_780)
     expect(parseUnitPrice('')).toBe(0)
     expect(parseUnitPrice('0.0000001')).toBeNull()
     expect(parseUnitPrice('abc')).toBeNull()
   })
 
   it('shows a unit price with its cents and any decimals beyond them', () => {
-    expect(formatUnitPrice('8.985', 'EUR', 'en')).toBe('€8.985')
+    expect(formatUnitPrice('2.345', 'EUR', 'en')).toBe('€2.345')
     expect(formatUnitPrice('12.5', 'EUR', 'en')).toBe('€12.50')
     expect(formatUnitPrice('0.0825', 'EUR', 'nl')).toBe('€\u00a00,0825')
   })
@@ -47,8 +47,8 @@ describe('invoice totals', () => {
   const vat9 = { taxRateId: '2', rate: 900 }
 
   it('rounds what a line with a long price comes to, to the cent', () => {
-    // 3 × 8.985 = 26.955, which comes to 26.96; a billion at six decimals stays exact.
-    expect(computeTotals([{ unitPrice: 8_985_000, quantity: 3000, taxRateId: '1', rate: 0 }], 0, false).lines).toEqual([2696])
+    // 3 × 2.345 = 7.035, which comes to 7.04; a billion at six decimals stays exact.
+    expect(computeTotals([{ unitPrice: 2_345_000, quantity: 3000, taxRateId: '1', rate: 0 }], 0, false).lines).toEqual([704])
     expect(computeTotals([{ unitPrice: 999_999_999_999_999, quantity: 3000, taxRateId: '1', rate: 0 }], 0, false).lines).toEqual([300_000_000_000])
   })
 

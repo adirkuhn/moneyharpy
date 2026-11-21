@@ -385,7 +385,7 @@ describe('transactions', () => {
 describe('financial accounts', () => {
   const overview = http.get('*/api/v2/11/overview', () => HttpResponse.json({ bank: { balance: '0.0', currency: 'EUR', unprocessed_count: 431, recently_processed: [] } }))
   const accounts = http.get('*/api/v2/11/financial_accounts', () => HttpResponse.json([
-    account({ balance: '40912.61', last_import_at: '2026-09-10T09:00:00Z' }), { ...cash, balance: '0.0' }, { ...old, balance: '0.0' },
+    account({ balance: '1234.56', last_import_at: '2026-09-10T09:00:00Z' }), { ...cash, balance: '0.0' }, { ...old, balance: '0.0' },
   ]))
 
   it('lists each account with its balance and opens its transactions, as Moneybird does', async () => {
@@ -395,7 +395,7 @@ describe('financial accounts', () => {
     const list = screen.getByRole('region', { name: 'Financial accounts' })
     const bank = within(list).getByRole('link', { name: 'NL91 ABNA 0417 1643 00' })
     expect(bank).toHaveAttribute('href', '/11/financial_mutations?account=501&state=all')
-    expect(bank).toHaveTextContent('€40,912.61')
+    expect(bank).toHaveTextContent('€1,234.56')
     expect(bank).toHaveTextContent(/Last update: .*ago/)
     expect(within(list).getByRole('link', { name: 'Cash' })).toHaveTextContent('Last update: never')
     // The deactivated account is folded away.
