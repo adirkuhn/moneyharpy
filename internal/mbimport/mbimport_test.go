@@ -547,3 +547,18 @@ func TestAResumedStepKeepsCountingWhatItImported(t *testing.T) {
 		t.Errorf("contacts step %+v", st)
 	}
 }
+
+func TestAPriceComesInAsAnAmount(t *testing.T) {
+	for in, want := range map[mbDecimal]string{"12.5": "12.5", "12.5000": "12.50", "-3.10": "-3.10", "1.0E2": "100.00"} {
+		got, err := price(in, 2)
+		if err != nil || got != want {
+			t.Errorf("price(%q) = %q, %v; want %q", in, got, err, want)
+		}
+	}
+	// One the import cannot read says what it was.
+	_, err := price("0.0825", 2)
+	var verr *resource.ValidationError
+	if !errors.As(err, &verr) || !strings.Contains(describe(err), `details_attributes.2.price: is not an amount: "0.0825"`) {
+		t.Errorf("err = %v", err)
+	}
+}

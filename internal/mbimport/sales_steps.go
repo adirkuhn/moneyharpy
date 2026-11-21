@@ -6,12 +6,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/big"
 	"net/url"
 	"slices"
 	"strings"
 	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/banking"
+	"github.com/adirkuhn/moneyharpy/internal/money"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/sales"
 )
@@ -306,7 +308,11 @@ func (r *run) externalInvoices(ctx context.Context) error {
 // VAT rates and categories that took Moneybird's place.
 func (r *run) details(ctx context.Context, in []mbDetail) ([]sales.ImportedDetail, error) {
 	out := make([]sales.ImportedDetail, 0, len(in))
-	for _, d := range in {
+	for i, d := range in {
+		price, err := price(d.Price, i)
+		if err != nil {
+			return nil, err
+		}
 		rate, err := r.mapped(ctx, kindTaxRate, ref(d.TaxRateID))
 		if err != nil {
 			return nil, err
@@ -315,7 +321,6 @@ func (r *run) details(ctx context.Context, in []mbDetail) ([]sales.ImportedDetai
 		if err != nil {
 			return nil, err
 		}
-		price := string(d.Price)
 		input := sales.DetailInput{
 			Description: d.Description, Period: opt(d.Period), Amount: opt(d.amount()), TaxRateID: rate, LedgerAccountID: ledger,
 			ProjectID: ref(d.ProjectID), ProductID: ref(d.ProductID), RowOrder: d.RowOrder, Optional: d.IsOptional, Selected: d.IsSelected,
@@ -383,4 +388,29 @@ func day(s *string) *time.Time {
 		return nil
 	}
 	return &t
+}
+
+// price writes a line's price as an amount here: in cents, which Moneybird
+// keeps it in too, however it writes it, such as "12.5000". One that is not
+// a whole number of cents fails its record, saying what it was.
+func price(in mbDecimal, line int) (string, error) {
+	s := strings.TrimSpace(string(in))
+	if s == "" {
+		return "", nil
+	}
+	if _, err := money.ParseAmount(s); err == nil {
+		return s, nil
+	}
+	if r, ok := new(big.Rat).SetString(s); ok {
+		if cents := new(big.Rat).Mul(r, big.NewRat(100, 1)); cents.IsInt() && cents.Num().IsInt64() {
+			c, sign := cents.Num().Int64(), ""
+			if c < 0 {
+				c, sign = -c, "-"
+			}
+			return fmt.Sprintf("%s%d.%02d", sign, c/100, c%100), nil
+		}
+	}
+	var verr resource.ValidationError
+	verr.Add(fmt.Sprintf("details_attributes.%d.price", line), fmt.Sprintf("is not an amount: %q", s))
+	return "", &verr
 }
