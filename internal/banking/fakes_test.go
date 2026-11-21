@@ -69,7 +69,9 @@ type memStore struct {
 }
 
 func (m *memStore) AttachPayment(_ context.Context, _ resource.ID, mutation resource.ID, invoiceType string, invoice resource.ID, price Amount) (bool, error) {
-	i := slices.IndexFunc(m.loose, func(p PaymentLink) bool { return p.InvoiceType == invoiceType && p.InvoiceID == invoice && p.Price == price })
+	i := slices.IndexFunc(m.loose, func(p PaymentLink) bool {
+		return p.InvoiceType == invoiceType && p.InvoiceID == invoice && p.Price == price
+	})
 	if i < 0 {
 		return false, nil
 	}
