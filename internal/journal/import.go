@@ -20,7 +20,7 @@ func (s *Service) Import(ctx context.Context, admin, user resource.ID, o resourc
 	}
 	created, updated := o.Or(s.now())
 	d := Document{ID: o.ID, AdministrationID: admin, CreatedAt: created, UpdatedAt: updated}
-	if err := s.apply(ctx, admin, user, &d, c, nil); err != nil {
+	if err := s.apply(ctx, admin, user, &d, c, nil, true); err != nil {
 		return Document{}, err
 	}
 	for i := range d.Rows {

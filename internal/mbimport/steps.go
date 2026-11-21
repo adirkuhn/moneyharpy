@@ -40,6 +40,7 @@ type Targets struct {
 	}
 	Contacts interface {
 		Import(ctx context.Context, admin, user resource.ID, o resource.Origin, c contacts.Changes, people []contacts.ImportedPerson) (contacts.Contact, error)
+		Update(ctx context.Context, admin, id, user resource.ID, c contacts.Changes) (contacts.Contact, error)
 	}
 	Products interface {
 		Import(ctx context.Context, admin, user resource.ID, o resource.Origin, c products.Changes) (products.Product, error)
@@ -107,6 +108,10 @@ type run struct {
 	token string
 	read  Reader
 	save  func(ctx context.Context) error
+	// mending is the record that came in before being mended, if any.
+	mending *mending
+	// partialNotes are, per kind, the parts records came in without.
+	partialNotes map[string]map[resource.ID][]string
 }
 
 func (r *run) step(ctx context.Context, kind string) error {
@@ -270,7 +275,20 @@ func (r *run) contacts(ctx context.Context) error {
 			changes.CustomFields = append(changes.CustomFields, contacts.FieldValue{FieldID: f.id, Value: f.value})
 		}
 		changes.SendInvoicesToEmail, changes.SendEstimatesToEmail = emailList(changes.SendInvoicesToEmail), emailList(changes.SendEstimatesToEmail)
+		if r.mending != nil {
+			return c.ID.id(), r.mendContact(ctx, c.ID.id(), changes)
+		}
 		got, err := r.s.targets.Contacts.Import(ctx, r.job.AdministrationID, r.job.UserID, c.origin(), changes, c.people())
+		if taken := changes.CustomerID; taken != nil && onlyField(err, "customer_id") {
+			// Another contact here has its number: it takes the next one, which is noted.
+			changes.CustomerID = nil
+			if got, err = r.s.targets.Contacts.Import(ctx, r.job.AdministrationID, r.job.UserID, c.origin(), changes, c.people()); err == nil {
+				msg := fmt.Sprintf("came in as customer %s, as customer %s is another contact here", got.CustomerID, *taken)
+				if err := r.partial(ctx, r.job.Step(StepContacts), kindContact, c.ID.id(), msg); err != nil {
+					return 0, err
+				}
+			}
+		}
 		if left := optionalOnly(err, contactOptional); left != nil {
 			// The contact comes in without what does not pass, which is noted with why.
 			why := describe(err)
@@ -336,6 +354,10 @@ func (r *run) synced(ctx context.Context, step, path, kind string, query url.Val
 	}
 	// Added up: a kind may be listed in parts, such as by state.
 	st.Total += len(versions)
+	notes, err := r.partials(ctx, kind)
+	if err != nil {
+		return err
+	}
 	var todo []string
 	for _, v := range versions {
 		id, err := resource.ParseID(v.ID)
@@ -349,10 +371,11 @@ func (r *run) synced(ctx context.Context, step, path, kind string, query url.Val
 		if err != nil {
 			return err
 		}
-		if done {
+		if done && len(notes[id]) == 0 {
 			st.found(at, r.job.StartedAt)
 			continue
 		}
+		// One that came in without a part is fetched to bring that in.
 		todo = append(todo, v.ID)
 	}
 	// Oldest first: a credit invoice comes after the invoice it credits.
@@ -403,6 +426,15 @@ func (r *run) take(ctx context.Context, st *Step, kind string, raws []json.RawMe
 			return err
 		} else if done {
 			st.found(at, r.job.StartedAt)
+			notes, err := r.partials(ctx, kind)
+			if err != nil {
+				return err
+			}
+			if n := notes[head.ID.id()]; len(n) > 0 {
+				if err := r.mend(ctx, kind, head.ID.id(), raw, n, one); err != nil {
+					return err
+				}
+			}
 			continue
 		}
 		id, err := one(ctx, raw)
@@ -480,6 +512,9 @@ func (r *run) fail(ctx context.Context, st *Step, kind string, id resource.ID, e
 
 // partial notes what a record came in without, such as a file.
 func (r *run) partial(ctx context.Context, st *Step, kind string, id resource.ID, msg string) error {
+	if r.mending != nil && r.mending.open[msg] {
+		r.mending.held[msg] = true
+	}
 	st.note("%s %d: %s", kind, id, msg)
 	return r.s.store.RecordProblem(ctx, r.job.AdministrationID, Problem{Step: st.Kind, Kind: kind, SourceID: id, Message: msg, Partial: true, CreatedAt: r.s.now()})
 }
@@ -506,6 +541,40 @@ func optionalOnly(err error, optional []string) []string {
 		}
 	}
 	return fields
+}
+
+// mendContact brings in the fields a contact that came in before came in
+// without, and only them; those that still do not pass are noted again.
+func (r *run) mendContact(ctx context.Context, id resource.ID, all contacts.Changes) error {
+	fields := r.leftOut()
+	var changes contacts.Changes
+	for _, f := range fields {
+		copyContactField(&changes, all, f)
+	}
+	_, err := r.s.targets.Contacts.Update(ctx, r.job.AdministrationID, id, r.job.UserID, changes)
+	if err == nil {
+		return nil
+	}
+	if left := optionalOnly(err, contactOptional); left != nil {
+		why := describe(err)
+		for _, f := range left {
+			clearContactField(&changes, f)
+		}
+		// Only what passes now comes in, if any of it does.
+		if slices.ContainsFunc(fields, func(f string) bool { return !slices.Contains(left, f) }) {
+			if _, err := r.s.targets.Contacts.Update(ctx, r.job.AdministrationID, id, r.job.UserID, changes); err != nil {
+				return err
+			}
+		}
+		return r.partial(ctx, r.job.Step(StepContacts), kindContact, id, "came in without "+strings.Join(left, ", ")+" ("+why+")")
+	}
+	return err
+}
+
+// onlyField tells a validation error about that one field alone.
+func onlyField(err error, field string) bool {
+	var verr *resource.ValidationError
+	return errors.As(err, &verr) && len(verr.Fields) == 1 && len(verr.Fields[field]) > 0
 }
 
 // clearContactField leaves a field out of a contact, with what depends on it.
@@ -577,4 +646,45 @@ func emailList(in *string) *string {
 	}
 	joined := strings.Join(out, ", ")
 	return &joined
+}
+
+// copyContactField takes a field into a contact's changes from all of
+// them, with what goes with it, as clearContactField leaves it out.
+func copyContactField(c *contacts.Changes, all contacts.Changes, field string) {
+	switch strings.SplitN(field, ".", 2)[0] {
+	case "send_invoices_to_email", "email_ubl":
+		c.SendInvoicesToEmail, c.EmailUBL, c.DeliveryMethod = all.SendInvoicesToEmail, all.EmailUBL, all.DeliveryMethod
+	case "send_estimates_to_email":
+		c.SendEstimatesToEmail = all.SendEstimatesToEmail
+	case "send_invoices_to_attention":
+		c.SendInvoicesToAttention = all.SendInvoicesToAttention
+	case "send_estimates_to_attention":
+		c.SendEstimatesToAttention = all.SendEstimatesToAttention
+	case "sepa_bic", "sepa_iban", "sepa_iban_account_name", "sepa_mandate_id", "sepa_mandate_date", "sepa_active", "sepa_sequence_type":
+		c.SepaBIC, c.SepaIBAN, c.SepaIBANAccountName, c.SepaMandateID, c.SepaMandateDate, c.SepaActive, c.SepaSequenceType =
+			all.SepaBIC, all.SepaIBAN, all.SepaIBANAccountName, all.SepaMandateID, all.SepaMandateDate, all.SepaActive, all.SepaSequenceType
+		c.DirectDebit = all.DirectDebit
+	case "tax_number":
+		c.TaxNumber = all.TaxNumber
+	case "chamber_of_commerce":
+		c.ChamberOfCommerce = all.ChamberOfCommerce
+	case "bank_account":
+		c.BankAccount = all.BankAccount
+	case "phone":
+		c.Phone = all.Phone
+	case "si_identifier", "si_identifier_type":
+		c.SIIdentifier, c.SIIdentifierType = all.SIIdentifier, all.SIIdentifierType
+	case "delivery_method":
+		c.DeliveryMethod = all.DeliveryMethod
+	case "invoice_workflow_id":
+		c.InvoiceWorkflowID = all.InvoiceWorkflowID
+	case "estimate_workflow_id":
+		c.EstimateWorkflowID = all.EstimateWorkflowID
+	case "custom_fields":
+		c.CustomFields = all.CustomFields
+	case "zipcode":
+		c.Zipcode = all.Zipcode
+	case "country":
+		c.Country = all.Country
+	}
 }

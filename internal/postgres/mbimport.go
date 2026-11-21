@@ -138,6 +138,24 @@ func (s *MoneybirdImportStore) ResolveProblems(ctx context.Context, admin resour
 	return s.q.ResolveMoneybirdImportProblems(ctx, sqlc.ResolveMoneybirdImportProblemsParams{AdministrationID: int64(admin), Kind: kind, SourceID: int64(source)})
 }
 
+// Partials implements mbimport.Store.
+func (s *MoneybirdImportStore) Partials(ctx context.Context, admin resource.ID, kind string) (map[resource.ID][]string, error) {
+	rows, err := s.q.MoneybirdImportPartials(ctx, sqlc.MoneybirdImportPartialsParams{AdministrationID: int64(admin), Kind: kind})
+	if err != nil {
+		return nil, err
+	}
+	out := map[resource.ID][]string{}
+	for _, r := range rows {
+		out[resource.ID(r.SourceID)] = append(out[resource.ID(r.SourceID)], r.Message)
+	}
+	return out, nil
+}
+
+// ForgetProblem implements mbimport.Store.
+func (s *MoneybirdImportStore) ForgetProblem(ctx context.Context, admin resource.ID, kind string, source resource.ID, message string) error {
+	return s.q.ForgetMoneybirdImportProblem(ctx, sqlc.ForgetMoneybirdImportProblemParams{AdministrationID: int64(admin), Kind: kind, SourceID: int64(source), Message: message})
+}
+
 // Problems implements mbimport.Store.
 func (s *MoneybirdImportStore) Problems(ctx context.Context, admin resource.ID, page, perPage int) ([]mbimport.Problem, int, error) {
 	total, err := s.q.CountMoneybirdImportProblems(ctx, int64(admin))

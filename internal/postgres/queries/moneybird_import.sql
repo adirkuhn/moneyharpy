@@ -59,6 +59,13 @@ ON CONFLICT (administration_id, kind, source_id, message) DO UPDATE SET step = e
 -- A record that came in no longer failed; what came in without it stays.
 DELETE FROM moneybird_import_problems WHERE administration_id = $1 AND kind = $2 AND source_id = $3 AND NOT partial;
 
+-- name: MoneybirdImportPartials :many
+-- What the records of a kind came in without.
+SELECT source_id, message FROM moneybird_import_problems WHERE administration_id = $1 AND kind = $2 AND partial;
+
+-- name: ForgetMoneybirdImportProblem :exec
+DELETE FROM moneybird_import_problems WHERE administration_id = $1 AND kind = $2 AND source_id = $3 AND message = $4;
+
 -- name: MoneybirdImportProblems :many
 SELECT * FROM moneybird_import_problems WHERE administration_id = $1 ORDER BY step, kind, source_id, message LIMIT $2 OFFSET $3;
 

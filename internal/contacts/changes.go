@@ -341,9 +341,6 @@ func (s *Service) validate(ctx context.Context, admin, user resource.ID, c *Cont
 			verr.Add(field, "is not a valid email address")
 		}
 	}
-	if c.DeliveryMethod == "Email" && c.EmailUBL && c.SendInvoicesToEmail == "" {
-		verr.Add("send_invoices_to_email", "can't be blank when invoices are sent by email")
-	}
 	if c.SepaIBAN != "" && !iban.Valid(c.SepaIBAN) {
 		verr.Add("sepa_iban", "is not a valid IBAN")
 	}
