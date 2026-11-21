@@ -11,8 +11,8 @@ func toMoneybirdImport(j mbimport.Job) MoneybirdImport {
 	out := MoneybirdImport{
 		SourceAdministrationId: j.SourceID, SourceName: j.SourceName, State: MoneybirdImportState(j.State),
 		Steps: make([]MoneybirdImportStep, len(j.Steps)), WaitingUntil: j.WaitingUntil, Error: j.Error,
-		NextAttemptAt: retryAt(j),
-		StartedAt:     j.StartedAt, FinishedAt: j.FinishedAt, UpdatedAt: j.UpdatedAt,
+		NextAttemptAt: retryAt(j), TokenKept: j.Token != "",
+		StartedAt: j.StartedAt, FinishedAt: j.FinishedAt, UpdatedAt: j.UpdatedAt,
 	}
 	for i, st := range j.Steps {
 		problems := st.Problems
@@ -51,12 +51,27 @@ func (s *server) StartMoneybirdImport(w http.ResponseWriter, r *http.Request, ad
 	if !ok {
 		return
 	}
-	j, err := s.deps.MoneybirdImport.Start(r.Context(), admin, user(r).ID, body.MoneybirdImport.Token, body.MoneybirdImport.AdministrationId)
+	in := body.MoneybirdImport
+	j, err := s.deps.MoneybirdImport.Start(r.Context(), admin, user(r).ID, deref(in.Token), deref(in.AdministrationId))
 	if err != nil {
 		s.fail(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusCreated, toMoneybirdImport(j))
+}
+
+// ForgetMoneybirdImportToken implements ServerInterface.
+func (s *server) ForgetMoneybirdImportToken(w http.ResponseWriter, r *http.Request, administrationID AdministrationId) {
+	admin, ok := parseID(w, administrationID)
+	if !ok {
+		return
+	}
+	j, err := s.deps.MoneybirdImport.ForgetToken(r.Context(), admin, user(r).ID)
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, toMoneybirdImport(j))
 }
 
 // ListMoneybirdAdministrations implements ServerInterface.

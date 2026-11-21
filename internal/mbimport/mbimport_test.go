@@ -291,7 +291,7 @@ func TestStartChecksTheOwnerTokenAndAnEmptyAdministration(t *testing.T) {
 	}
 }
 
-func TestWorkImportsEverythingAndForgetsTheToken(t *testing.T) {
+func TestWorkImportsEverythingAndKeepsTheToken(t *testing.T) {
 	s, store, _, f := setup()
 	ctx := context.Background()
 	if _, err := s.Start(ctx, adminID, owner, "good", source); err != nil {
@@ -301,7 +301,8 @@ func TestWorkImportsEverythingAndForgetsTheToken(t *testing.T) {
 		t.Fatal(err)
 	}
 	j := *store.job
-	if j.State != Done || j.Token != "" || j.FinishedAt == nil {
+	// The sealed token stays, so importing again needs no new one.
+	if j.State != Done || j.Token != "sealed:good" || j.FinishedAt == nil {
 		t.Fatalf("job %+v", j)
 	}
 	if len(f.chart.Accounts) != 2 || f.chart.Accounts[0].Taxonomy != "BVorDebHad" || f.chart.Rates[0].Percentage != "21.0" {
@@ -355,6 +356,77 @@ func TestRunningAgainAddsOnlyWhatIsNew(t *testing.T) {
 	}
 	if st := store.job.Step(StepContacts); st.Skipped != 1 || st.Imported != 1 {
 		t.Errorf("contacts step %+v", st)
+	}
+}
+
+func TestImportingAgainUsesTheKeptToken(t *testing.T) {
+	s, store, mb, f := setup()
+	ctx := context.Background()
+	if _, err := s.Start(ctx, adminID, owner, "", source); err == nil {
+		t.Error("a first import started without a token")
+	}
+	if _, err := s.Start(ctx, adminID, owner, "good", source); err != nil {
+		t.Fatal(err)
+	}
+	_ = s.Work(ctx)
+	store.empty = false
+	mb.records["contacts"] = append(mb.records["contacts"], `{"id":"503","company_name":"Beispiel GmbH"}`)
+	// Without a token or an administration, it imports the same one with the kept token.
+	j, err := s.Start(ctx, adminID, owner, "", "")
+	if err != nil {
+		t.Fatalf("again with the kept token: %v", err)
+	}
+	if j.Token != "sealed:good" || j.SourceID != source {
+		t.Errorf("job %+v", j)
+	}
+	_ = s.Work(ctx)
+	if _, ok := f.contacts[503]; !ok {
+		t.Error("the new contact was not imported")
+	}
+}
+
+func TestAKeptTokenMoneybirdRefusesIsForgotten(t *testing.T) {
+	s, store, mb, _ := setup()
+	ctx := context.Background()
+	if _, err := s.Start(ctx, adminID, owner, "good", source); err != nil {
+		t.Fatal(err)
+	}
+	_ = s.Work(ctx)
+	mb.token = "revoked"
+	if _, err := s.Start(ctx, adminID, owner, "", ""); !errors.Is(err, ErrTokenRejected) {
+		t.Fatalf("a refused kept token: %v", err)
+	}
+	if store.job.Token != "" || store.job.State != Done {
+		t.Errorf("job %+v", store.job)
+	}
+	var verr *resource.ValidationError
+	if _, err := s.Start(ctx, adminID, owner, "", ""); !errors.As(err, &verr) {
+		t.Errorf("again once it was forgotten: %v", err)
+	}
+}
+
+func TestForgetTokenDropsIt(t *testing.T) {
+	s, store, _, _ := setup()
+	ctx := context.Background()
+	if _, err := s.ForgetToken(ctx, adminID, owner); !errors.Is(err, ErrNotFound) {
+		t.Errorf("before an import: %v", err)
+	}
+	if _, err := s.Start(ctx, adminID, owner, "good", source); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.ForgetToken(ctx, adminID, owner); !errors.Is(err, ErrRunning) {
+		t.Errorf("while it runs: %v", err)
+	}
+	_ = s.Work(ctx)
+	if _, err := s.ForgetToken(ctx, adminID, clerk); !errors.Is(err, membership.ErrForbidden) {
+		t.Errorf("a member who does not own it: %v", err)
+	}
+	j, err := s.ForgetToken(ctx, adminID, owner)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if j.Token != "" || store.job.Token != "" || j.State != Done {
+		t.Errorf("job %+v", j)
 	}
 }
 

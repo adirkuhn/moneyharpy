@@ -79,16 +79,13 @@ func (s *Service) process(ctx context.Context, j Job) {
 		j.NextAttemptAt = &next
 	case errors.Is(err, ErrTokenRejected):
 		// Only a new token lets it go on: started again, it carries on where it stopped.
-		j.State, j.Error, j.FinishedAt, j.NextAttemptAt = Failed, err.Error(), &now, nil
+		// A refused token is of no use any more.
+		j.State, j.Error, j.FinishedAt, j.NextAttemptAt, j.Token = Failed, err.Error(), &now, nil, ""
 	default:
 		j.Attempts++
 		j.Error = err.Error()
 		next := now.Add(backoff(j.Attempts))
 		j.NextAttemptAt = &next
-	}
-	if j.State != Running {
-		// The token is only kept while the job may still use it.
-		j.Token = ""
 	}
 	// A cancelled ctx must not stop the job's state from being saved.
 	_ = s.store.SaveJob(context.WithoutCancel(ctx), j)

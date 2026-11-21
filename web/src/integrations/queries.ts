@@ -130,9 +130,19 @@ export function useMoneybirdAdministrations(administrationId: string) {
 export function useStartMoneybirdImport(administrationId: string) {
   const client = useQueryClient()
   return useMutation({
-    mutationFn: (body: { token: string; administration_id: string }) =>
+    // Without a token, the one the last import kept imports the same administration again.
+    mutationFn: (body: { token?: string; administration_id?: string }) =>
       unwrap(api.POST('/api/v2/{administration_id}/moneybird_import', { ...admin(administrationId), body: { moneybird_import: body } })),
     onSuccess: (started) => client.setQueryData(['moneybird-import', administrationId], started),
+  })
+}
+
+/** Forgets the Moneybird token the import keeps; importing again then asks for one. */
+export function useForgetMoneybirdImportToken(administrationId: string) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: () => unwrap(api.DELETE('/api/v2/{administration_id}/moneybird_import/token', admin(administrationId))),
+    onSuccess: (job) => client.setQueryData(['moneybird-import', administrationId], job),
   })
 }
 

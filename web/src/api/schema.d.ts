@@ -6727,7 +6727,7 @@ export interface paths {
         put?: never;
         /**
          * Import a Moneybird administration
-         * @description MoneyHarpy extension. Copies a Moneybird administration into this one in the background, keeping Moneybird's ids: its categories and VAT rates, which take the place of the defaults, custom fields, sender addresses and workflows (whose reminders do not send by themselves), then its contacts, products, projects, financial accounts with their transactions and bookings, estimates, recurring invoices (stopped, so nobody is billed twice), sales and external invoices with their numbers, payments and write-offs, purchase invoices, receipts, general and typeless documents, journal entries, time entries and task lists, their notes, files and the PDFs Moneybird sent, and last the locked period. Nothing is sent to contacts. This administration must be empty, unless it imported the same Moneybird administration before; then only what is new comes in. The import reads Moneybird with the personal API token given, within Moneybird's rate limit, and forgets the token once it ends.
+         * @description MoneyHarpy extension. Copies a Moneybird administration into this one in the background, keeping Moneybird's ids: its categories and VAT rates, which take the place of the defaults, custom fields, sender addresses and workflows (whose reminders do not send by themselves), then its contacts, products, projects, financial accounts with their transactions and bookings, estimates, recurring invoices (stopped, so nobody is billed twice), sales and external invoices with their numbers, payments and write-offs, purchase invoices, receipts, general and typeless documents, journal entries, time entries and task lists, their notes, files and the PDFs Moneybird sent, and last the locked period. Nothing is sent to contacts. This administration must be empty, unless it imported the same Moneybird administration before; then only what is new comes in. The import reads Moneybird with the personal API token given, within Moneybird's rate limit, and keeps the token sealed so the same administration can be imported again without it, until the token is forgotten or Moneybird refuses it.
          */
         post: operations["startMoneybirdImport"];
         delete?: never;
@@ -6775,6 +6775,28 @@ export interface paths {
          */
         post: operations["tryMoneybirdImportNow"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/moneybird_import/token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Forget the kept Moneybird token
+         * @description MoneyHarpy extension. Drops the Moneybird API token the import keeps; importing again then needs one. Not while the import runs, as it still needs it.
+         */
+        delete: operations["forgetMoneybirdImportToken"];
         options?: never;
         head?: never;
         patch?: never;
@@ -10334,10 +10356,10 @@ export interface components {
         };
         MoneybirdImportRequest: {
             moneybird_import: {
-                /** @description A Moneybird personal API token, kept sealed only while the import runs. */
-                token: string;
-                /** @description The Moneybird administration to import. */
-                administration_id: string;
+                /** @description A Moneybird personal API token, kept sealed to import again. Left out, the token the last import kept is used. */
+                token?: string;
+                /** @description The Moneybird administration to import. Left out with the token, the one imported before. */
+                administration_id?: string;
             };
         };
         MoneybirdImportStep: {
@@ -10384,6 +10406,8 @@ export interface components {
             next_attempt_at: string | null;
             /** @description Why the import stopped, or last had to try again. */
             error: string;
+            /** @description Whether a Moneybird token is kept, so importing again needs none. */
+            token_kept: boolean;
             /** Format: date-time */
             started_at: string;
             /** Format: date-time */
@@ -24958,6 +24982,34 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description The import, due now */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MoneybirdImport"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    forgetMoneybirdImportToken: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The import, without its token */
             200: {
                 headers: {
                     [name: string]: unknown;

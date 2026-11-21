@@ -13589,7 +13589,8 @@ paths:
         invoices, receipts, general and typeless documents, journal entries, time entries and task lists, their
         notes, files and the PDFs Moneybird sent, and last the locked period. Nothing is sent to contacts. This administration must be empty, unless it imported the same Moneybird administration before; then
         only what is new comes in. The import reads Moneybird with the personal API token given, within Moneybird's
-        rate limit, and forgets the token once it ends.
+        rate limit, and keeps the token sealed so the same administration can be imported again without it, until
+        the token is forgotten or Moneybird refuses it.
       tags: [Integrations]
       requestBody:
         required: true
@@ -13672,6 +13673,36 @@ paths:
       responses:
         '200':
           description: The import, due now
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MoneybirdImport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/moneybird_import/token:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    delete:
+      operationId: forgetMoneybirdImportToken
+      x-permissions: [ownership]
+      summary: Forget the kept Moneybird token
+      description: >-
+        MoneyHarpy extension. Drops the Moneybird API token the import keeps; importing again then needs one. Not
+        while the import runs, as it still needs it.
+      tags: [Integrations]
+      responses:
+        '200':
+          description: The import, without its token
           content:
             application/json:
               schema:
@@ -20755,17 +20786,18 @@ components:
       properties:
         moneybird_import:
           type: object
-          required: [token, administration_id]
           additionalProperties: false
           properties:
             token:
               type: string
               maxLength: 500
-              description: A Moneybird personal API token, kept sealed only while the import runs.
+              description: >-
+                A Moneybird personal API token, kept sealed to import again. Left out, the token the last import kept
+                is used.
             administration_id:
               type: string
               maxLength: 30
-              description: The Moneybird administration to import.
+              description: The Moneybird administration to import. Left out with the token, the one imported before.
     MoneybirdImportStep:
       type: object
       required: [kind, total, imported, skipped, failed, done, problems]
@@ -20813,7 +20845,7 @@ components:
     MoneybirdImport:
       type: object
       description: The import of a Moneybird administration. MoneyHarpy extension.
-      required: [source_administration_id, source_name, state, steps, waiting_until, next_attempt_at, error, started_at, finished_at, updated_at]
+      required: [source_administration_id, source_name, state, steps, waiting_until, next_attempt_at, error, token_kept, started_at, finished_at, updated_at]
       properties:
         source_administration_id:
           type: string
@@ -20841,6 +20873,9 @@ components:
         error:
           type: string
           description: Why the import stopped, or last had to try again.
+        token_kept:
+          type: boolean
+          description: Whether a Moneybird token is kept, so importing again needs none.
         started_at:
           type: string
           format: date-time

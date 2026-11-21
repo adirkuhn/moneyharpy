@@ -4,7 +4,7 @@ import { Problems } from '../auth/AuthLayout'
 import { FormRow, formErrors } from '../forms/Form'
 import { Block } from '../settings/Block'
 import './integrations.css'
-import { type MoneybirdAdministration, type MoneybirdImport, useMoneybirdAdministrations, useMoneybirdImport, useMoneybirdImportProblems, useStartMoneybirdImport, useTryMoneybirdImportNow } from './queries'
+import { type MoneybirdAdministration, type MoneybirdImport, useMoneybirdAdministrations, useForgetMoneybirdImportToken, useMoneybirdImport, useMoneybirdImportProblems, useStartMoneybirdImport, useTryMoneybirdImportNow } from './queries'
 
 /**
  * Settings > Integrations > Import from Moneybird: a personal API token, the
@@ -21,12 +21,32 @@ export function MoneybirdImportBlock({ administrationId }: { administrationId: s
     <Block id="moneybird-import" title={t('mbImport.title')} subtitle={t('mbImport.subtitle')}>
       {current && <Progress administrationId={administrationId} job={current} />}
       {current && current.state !== 'running' && !again && (
-        <button type="button" className="btn btn--secondary" onClick={() => setAgain(true)}>{t('mbImport.again')}</button>
+        current.token_kept
+          ? <KeptToken administrationId={administrationId} />
+          : <button type="button" className="btn btn--secondary" onClick={() => setAgain(true)}>{t('mbImport.again')}</button>
       )}
       {job.isSuccess && showForm && (
         <StartForm administrationId={administrationId} source={current?.source_administration_id} onStarted={() => setAgain(false)} />
       )}
     </Block>
+  )
+}
+
+/** With a token kept, importing again needs none; it can be forgotten, and then importing again asks for one. */
+function KeptToken({ administrationId }: { administrationId: string }) {
+  const { t } = useTranslation()
+  const start = useStartMoneybirdImport(administrationId)
+  const forget = useForgetMoneybirdImportToken(administrationId)
+  const busy = start.isPending || forget.isPending
+  return (
+    <div className="card-stack">
+      <p className="hint">{t('mbImport.tokenKept')}</p>
+      <Problems messages={formErrors(start.error ?? forget.error, {}).general} />
+      <div className="mb-import__actions">
+        <button type="button" className="btn btn--secondary" disabled={busy} onClick={() => start.mutate({})}>{t('mbImport.again')}</button>
+        <button type="button" className="btn btn--secondary" disabled={busy} onClick={() => forget.mutate()}>{t('mbImport.forgetToken')}</button>
+      </div>
+    </div>
   )
 }
 
