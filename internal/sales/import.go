@@ -4,7 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
+
+	"github.com/adirkuhn/moneyharpy/internal/money"
 
 	"github.com/adirkuhn/moneyharpy/internal/journal"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
@@ -188,9 +191,9 @@ func keepLineIDs(lines []Detail, details []ImportedDetail, created time.Time) {
 }
 
 // importPayments makes an imported invoice's payments, oldest first.
-// ImportPayments brings in the payments of an invoice that came in before
-// without any, as the source has them. It reports whether it added them;
-// an invoice that has payments keeps them.
+// ImportPayments brings in the payments the source has on an invoice that
+// came in before that are not here, such as one refused then. It reports
+// whether it added any; the payments here stay.
 func (s *Service) ImportPayments(ctx context.Context, admin, user resource.ID, kind string, id resource.ID, payments []ImportedPayment) (bool, error) {
 	if _, err := s.admins.Get(ctx, admin, user); err != nil {
 		return false, err
@@ -199,10 +202,11 @@ func (s *Service) ImportPayments(ctx context.Context, admin, user resource.ID, k
 	if err != nil {
 		return false, err
 	}
-	if len(inv.Payments) > 0 || len(payments) == 0 || inv.State == Draft {
+	missing := MissingPayments(inv.Payments, payments)
+	if len(missing) == 0 || inv.State == Draft {
 		return false, nil
 	}
-	return true, s.importPayments(ctx, admin, user, kind, id, payments)
+	return true, s.importPayments(ctx, admin, user, kind, id, missing)
 }
 
 func (s *Service) importPayments(ctx context.Context, admin, user resource.ID, kind string, id resource.ID, payments []ImportedPayment) error {
@@ -363,4 +367,41 @@ func (s *Service) ImportRecurring(ctx context.Context, admin, user resource.ID, 
 		return Recurring{}, err
 	}
 	return s.store.RecurringInvoice(ctx, admin, r.ID)
+}
+
+// MissingPayments returns the payments another system has that are not
+// here: one linked to a transaction is here when a payment here is linked
+// to it, or waits unlinked with its price, which linking takes over; any
+// other when one here has its price and day. Each payment here stands for
+// one of them only.
+func MissingPayments(here []Payment, theirs []ImportedPayment) []ImportedPayment {
+	used := make([]bool, len(here))
+	take := func(match func(Payment) bool) bool {
+		for i, p := range here {
+			if !used[i] && match(p) {
+				used[i] = true
+				return true
+			}
+		}
+		return false
+	}
+	var missing []ImportedPayment
+	for _, t := range theirs {
+		var price money.Amount
+		if t.Input.Price != nil {
+			price, _ = money.ParseAmount(*t.Input.Price)
+		}
+		day, _, _ := strings.Cut(strings.TrimSpace(t.Input.PaymentDate), "T")
+		unlinked := func(p Payment) bool { return p.FinancialMutationID == nil && p.Price == price }
+		var found bool
+		if m := t.Input.FinancialMutationID; m != nil {
+			found = take(func(p Payment) bool { return p.FinancialMutationID != nil && *p.FinancialMutationID == *m }) || take(unlinked)
+		} else {
+			found = take(func(p Payment) bool { return unlinked(p) && p.PaymentDate.Format(time.DateOnly) == day })
+		}
+		if !found {
+			missing = append(missing, t)
+		}
+	}
+	return missing
 }

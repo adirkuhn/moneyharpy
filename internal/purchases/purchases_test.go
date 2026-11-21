@@ -151,7 +151,24 @@ func TestImportedPaymentsComeInAsTheSourceHasThem(t *testing.T) {
 	}
 }
 
-func TestImportPaymentsAddsThemOnlyToADocumentWithout(t *testing.T) {
+func TestAnImportedSettlementBooksItsOwnSide(t *testing.T) {
+	// Each document Moneybird settled against another has its own payment
+	// on the settlements category; it comes in on its own.
+	h := newHarness(t)
+	d, err := h.svc.Import(ctx, adminID, owner, ImportedDocument{
+		Origin: resource.Origin{ID: 9005}, Kind: PurchaseInvoice, Changes: invoice(),
+		Details:  []sales.ImportedDetail{{Input: line("100", vat21, costs)}},
+		Payments: []sales.ImportedPayment{{Input: sales.PaymentInput{PaymentDate: "2026-11-02", Price: ptr("121"), ManualPaymentAction: sales.InvoicesSettlement, LedgerAccountID: ptr(settlements)}}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if d.State != Paid || len(d.Payments) != 1 || *d.Payments[0].LedgerAccountID != settlements {
+		t.Errorf("document = %+v", d)
+	}
+}
+
+func TestImportPaymentsAddsWhatIsNotHere(t *testing.T) {
 	h := newHarness(t)
 	d, err := h.svc.Import(ctx, adminID, owner, ImportedDocument{
 		Origin: resource.Origin{ID: 9004}, Kind: PurchaseInvoice, Changes: invoice(),
@@ -167,7 +184,15 @@ func TestImportPaymentsAddsThemOnlyToADocumentWithout(t *testing.T) {
 	if added, err := h.svc.ImportPayments(ctx, adminID, owner, PurchaseInvoice, d.ID, pays); err != nil || added {
 		t.Errorf("again: %v, %v", added, err)
 	}
-	if got, _ := h.store.Document(ctx, adminID, PurchaseInvoice, d.ID); got.State != Paid || len(got.Payments) != 1 {
+	// One the source has besides comes in too: refunded, then paid again.
+	more := append(pays,
+		sales.ImportedPayment{Input: sales.PaymentInput{PaymentDate: "2026-11-04", Price: ptr("-121")}},
+		sales.ImportedPayment{Input: sales.PaymentInput{PaymentDate: "2026-11-05", Price: ptr("121")}},
+	)
+	if added, err := h.svc.ImportPayments(ctx, adminID, owner, PurchaseInvoice, d.ID, more); err != nil || !added {
+		t.Fatalf("more: %v, %v", added, err)
+	}
+	if got, _ := h.store.Document(ctx, adminID, PurchaseInvoice, d.ID); len(got.Payments) != 3 || got.State != Paid {
 		t.Errorf("document = %+v", got)
 	}
 }
