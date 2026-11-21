@@ -19,7 +19,7 @@ const base = [
 ]
 
 const running: MoneybirdImport = {
-  source_administration_id: '123', source_name: 'Example Shop B.V.', state: 'running', error: '', waiting_until: '2026-11-20T09:05:00Z', next_attempt_at: null,
+  source_administration_id: '123', source_name: 'Example Shop B.V.', state: 'running', error: '', waiting_until: '2026-11-20T09:05:00Z', next_attempt_at: null, token_kept: true,
   started_at: '2026-11-20T09:00:00Z', finished_at: null, updated_at: '2026-11-20T09:01:00Z',
   steps: [
     { kind: 'chart', total: 40, imported: 40, skipped: 0, failed: 0, done: true, problems: [] },
@@ -85,6 +85,47 @@ describe('import from Moneybird', () => {
     renderAt('/11/settings/connections')
     expect(await screen.findByRole('region', { name: 'Webhooks' })).toBeInTheDocument()
     expect(screen.queryByRole('region', { name: 'Import from Moneybird' })).toBeNull()
+  })
+})
+
+describe('a finished import', () => {
+  const done: MoneybirdImport = { ...running, state: 'done', waiting_until: null, finished_at: '2026-11-20T10:00:00Z' }
+
+  it('imports again with the kept token, without asking for it', async () => {
+    let started: unknown
+    server.use(
+      ...base,
+      http.get('*/api/v2/11/moneybird_import', () => HttpResponse.json(started ? running : done)),
+      http.post('*/api/v2/11/moneybird_import', async ({ request }) => {
+        started = await request.json()
+        return HttpResponse.json(running, { status: 201 })
+      }),
+    )
+    renderAt('/11/settings/connections')
+    const block = await screen.findByRole('region', { name: 'Import from Moneybird' })
+    await userEvent.click(await within(block).findByRole('button', { name: 'Import again' }))
+    await waitFor(() => expect(started).toEqual({ moneybird_import: {} }))
+    expect(within(block).queryByLabelText('Moneybird API token')).toBeNull()
+  })
+
+  it('forgets the token on request, and then asks for one', async () => {
+    let forgotten = false
+    server.use(
+      ...base,
+      http.get('*/api/v2/11/moneybird_import', () => HttpResponse.json({ ...done, token_kept: !forgotten })),
+      http.delete('*/api/v2/11/moneybird_import/token', () => {
+        forgotten = true
+        return HttpResponse.json({ ...done, token_kept: false })
+      }),
+    )
+    renderAt('/11/settings/connections')
+    const block = await screen.findByRole('region', { name: 'Import from Moneybird' })
+    expect(await within(block).findByText('The Moneybird token is kept, encrypted, to import again.')).toBeInTheDocument()
+    await userEvent.click(within(block).getByRole('button', { name: 'Forget token' }))
+    await waitFor(() => expect(forgotten).toBe(true))
+    await waitFor(() => expect(within(block).queryByRole('button', { name: 'Forget token' })).toBeNull())
+    await userEvent.click(within(block).getByRole('button', { name: 'Import again' }))
+    expect(await within(block).findByLabelText('Moneybird API token')).toBeInTheDocument()
   })
 })
 

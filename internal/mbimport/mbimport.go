@@ -169,7 +169,8 @@ type Job struct {
 	// while it waits.
 	WaitingUntil *time.Time
 	Error        string
-	// Token is the sealed API token, kept only while the job may run.
+	// Token is the sealed API token, kept to import again until it is
+	// forgotten or Moneybird refuses it.
 	Token    string
 	Attempts int
 	// NextAttemptAt is when the job runs next; the worker moves it ahead
@@ -317,12 +318,28 @@ func tokenBlank() error {
 
 // Start begins importing a Moneybird administration. The administration
 // must be empty, unless it imported this Moneybird administration before:
-// then the import adds what is new since.
+// then the import adds what is new since. Without a token it imports that
+// administration again with the token the last import kept.
 func (s *Service) Start(ctx context.Context, admin, user resource.ID, token, sourceID string) (Job, error) {
 	if err := s.owner(ctx, admin, user); err != nil {
 		return Job{}, err
 	}
 	token, sourceID = strings.TrimSpace(token), strings.TrimSpace(sourceID)
+	previous, err := s.store.Job(ctx, admin)
+	switch {
+	case errors.Is(err, ErrNotFound):
+	case err != nil:
+		return Job{}, err
+	case previous.State == Running:
+		return Job{}, ErrRunning
+	}
+	kept := token == "" && previous.Token != "" && (sourceID == "" || sourceID == previous.SourceID)
+	if kept {
+		sourceID = previous.SourceID
+		if token, err = s.secrets.Open(previous.Token); err != nil {
+			return Job{}, fmt.Errorf("open token: %w", err)
+		}
+	}
 	var verr resource.ValidationError
 	if token == "" {
 		verr.Add("token", "can't be blank")
@@ -332,14 +349,6 @@ func (s *Service) Start(ctx context.Context, admin, user resource.ID, token, sou
 	}
 	if err := verr.OrNil(); err != nil {
 		return Job{}, err
-	}
-	previous, err := s.store.Job(ctx, admin)
-	switch {
-	case errors.Is(err, ErrNotFound):
-	case err != nil:
-		return Job{}, err
-	case previous.State == Running:
-		return Job{}, ErrRunning
 	}
 	if previous.SourceID != sourceID {
 		empty, err := s.store.Empty(ctx, admin)
@@ -352,6 +361,12 @@ func (s *Service) Start(ctx context.Context, admin, user resource.ID, token, sou
 	}
 	// The token must reach the administration; this also checks it works.
 	sources, err := s.sourceAdministrations(ctx, token)
+	if kept && errors.Is(err, ErrTokenRejected) {
+		// A kept token Moneybird refuses is of no use any more.
+		if _, ferr := s.forget(ctx, previous); ferr != nil {
+			return Job{}, ferr
+		}
+	}
 	if err != nil {
 		return Job{}, err
 	}
@@ -406,6 +421,30 @@ func (s *Service) TryNow(ctx context.Context, admin, user resource.ID) (Job, err
 		return Job{}, ErrNotQueued
 	}
 	j.NextAttemptAt, j.UpdatedAt = &now, now
+	if err := s.store.SaveJob(ctx, j); err != nil {
+		return Job{}, fmt.Errorf("save import: %w", err)
+	}
+	return j, nil
+}
+
+// ForgetToken drops the API token the administration's import keeps; the
+// next import then needs one again. A running import still needs it.
+func (s *Service) ForgetToken(ctx context.Context, admin, user resource.ID) (Job, error) {
+	if err := s.owner(ctx, admin, user); err != nil {
+		return Job{}, err
+	}
+	j, err := s.store.Job(ctx, admin)
+	if err != nil {
+		return Job{}, err
+	}
+	if j.State == Running {
+		return Job{}, ErrRunning
+	}
+	return s.forget(ctx, j)
+}
+
+func (s *Service) forget(ctx context.Context, j Job) (Job, error) {
+	j.Token, j.UpdatedAt = "", s.now()
 	if err := s.store.SaveJob(ctx, j); err != nil {
 		return Job{}, fmt.Errorf("save import: %w", err)
 	}

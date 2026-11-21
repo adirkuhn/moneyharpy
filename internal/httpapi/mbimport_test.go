@@ -43,7 +43,7 @@ func TestImportFromMoneybird(t *testing.T) {
 		t.Fatal(err)
 	}
 	done := decode[httpapi.MoneybirdImport](t, owner.do(http.MethodGet, api+"/moneybird_import", nil))
-	if done.State != "done" || done.FinishedAt == nil {
+	if done.State != "done" || done.FinishedAt == nil || !done.TokenKept {
 		t.Fatalf("import = %+v", done)
 	}
 	for _, st := range done.Steps {
@@ -220,7 +220,7 @@ func TestImportFromMoneybird(t *testing.T) {
 	if queued.NextAttemptAt == nil || queued.NextAttemptAt.After(time.Now()) {
 		t.Errorf("tries at %v", queued.NextAttemptAt)
 	}
-	// A finished import keeps no token to go on with: it is finished again for what follows.
+	// The import is finished again for what follows.
 	if _, err := h.pool.Exec(context.Background(), `UPDATE moneybird_imports SET state = 'done', error = '', next_attempt_at = NULL WHERE administration_id = $1`, a.Id); err != nil {
 		t.Fatal(err)
 	}
@@ -230,4 +230,16 @@ func TestImportFromMoneybird(t *testing.T) {
 	other := map[string]any{"moneybird_import": map[string]any{"token": moneybirdToken, "administration_id": "456"}}
 	_ = h.mbimport.Work(context.Background())
 	wantStatus(t, owner.do(http.MethodPost, api+"/moneybird_import", other), http.StatusUnprocessableEntity)
+
+	// Importing again needs no token while one is kept; once forgotten it does.
+	again := map[string]any{"moneybird_import": map[string]any{}}
+	wantStatus(t, owner.do(http.MethodPost, api+"/moneybird_import", again), http.StatusCreated)
+	wantStatus(t, owner.do(http.MethodDelete, api+"/moneybird_import/token", nil), http.StatusUnprocessableEntity)
+	_ = h.mbimport.Work(context.Background())
+	wantStatus(t, clerk.do(http.MethodDelete, api+"/moneybird_import/token", nil), http.StatusForbidden)
+	forgotten := decode[httpapi.MoneybirdImport](t, owner.do(http.MethodDelete, api+"/moneybird_import/token", nil))
+	if forgotten.TokenKept {
+		t.Errorf("import = %+v", forgotten)
+	}
+	wantStatus(t, owner.do(http.MethodPost, api+"/moneybird_import", again), http.StatusUnprocessableEntity)
 }

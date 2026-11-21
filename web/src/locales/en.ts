@@ -1140,7 +1140,7 @@ export const en = {
     subtitle: 'Move to MoneyHarpy: copy a Moneybird administration into this one, keeping its ids.',
     help: 'This administration must be empty. Everything comes in with Moneybird\'s ids: categories and VAT rates (in place of the defaults), custom fields, sender addresses and workflows, contacts, products and projects, bank accounts and transactions, quotes, invoices, incoming documents, journal entries, time and task lists, with their notes and files; last the books are locked as in Moneybird. While you still use Moneybird nothing here contacts your customers: recurring invoices come in stopped and reminders do not send by themselves. Layouts stay MoneyHarpy\'s own.',
     againHelp: 'Only what is new in Moneybird since the last import comes in; what was imported stays as it is.',
-    token: 'Moneybird API token', tokenHelp: 'Create a personal API token in Moneybird, under the developer settings of your account. MoneyHarpy keeps it encrypted only while the import runs.',
+    token: 'Moneybird API token', tokenHelp: 'Create a personal API token in Moneybird, under the developer settings of your account. MoneyHarpy keeps it encrypted to import again, until you forget it.', tokenKept: 'The Moneybird token is kept, encrypted, to import again.', forgetToken: 'Forget token',
     administration: 'Moneybird administration', none: 'This token reaches no administration.', check: 'Check token', start: 'Start import', again: 'Import again',
     from: 'From {{name}}', states: { running: 'Importing', done: 'Done', failed: 'Stopped' },
     waiting: 'Waiting for Moneybird\'s rate limit until {{time}}. The import goes on by itself.',

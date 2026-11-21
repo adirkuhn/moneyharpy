@@ -9088,7 +9088,10 @@ type MoneybirdImport struct {
 	StartedAt              time.Time             `json:"started_at"`
 	State                  MoneybirdImportState  `json:"state"`
 	Steps                  []MoneybirdImportStep `json:"steps"`
-	UpdatedAt              time.Time             `json:"updated_at"`
+
+	// TokenKept Whether a Moneybird token is kept, so importing again needs none.
+	TokenKept bool      `json:"token_kept"`
+	UpdatedAt time.Time `json:"updated_at"`
 
 	// WaitingUntil While the import waits for Moneybird's rate limit, until when.
 	WaitingUntil *time.Time `json:"waiting_until"`
@@ -9116,11 +9119,11 @@ type MoneybirdImportProblem struct {
 // MoneybirdImportRequest defines model for MoneybirdImportRequest.
 type MoneybirdImportRequest struct {
 	MoneybirdImport struct {
-		// AdministrationId The Moneybird administration to import.
-		AdministrationId string `json:"administration_id"`
+		// AdministrationId The Moneybird administration to import. Left out with the token, the one imported before.
+		AdministrationId *string `json:"administration_id,omitempty"`
 
-		// Token A Moneybird personal API token, kept sealed only while the import runs.
-		Token string `json:"token"`
+		// Token A Moneybird personal API token, kept sealed to import again. Left out, the token the last import kept is used.
+		Token *string `json:"token,omitempty"`
 	} `json:"moneybird_import"`
 }
 
@@ -23585,6 +23588,9 @@ type ServerInterface interface {
 	// ListMoneybirdImportProblems List what the import could not bring in
 	// (GET /api/v2/{administration_id}/moneybird_import/problems)
 	ListMoneybirdImportProblems(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListMoneybirdImportProblemsParams)
+	// ForgetMoneybirdImportToken Forget the kept Moneybird token
+	// (DELETE /api/v2/{administration_id}/moneybird_import/token)
+	ForgetMoneybirdImportToken(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
 	// TryMoneybirdImportNow Try a queued import again now
 	// (POST /api/v2/{administration_id}/moneybird_import/try_now)
 	TryMoneybirdImportNow(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
@@ -25865,6 +25871,12 @@ func (_ Unimplemented) ListMoneybirdAdministrations(w http.ResponseWriter, r *ht
 // ListMoneybirdImportProblems List what the import could not bring in
 // (GET /api/v2/{administration_id}/moneybird_import/problems)
 func (_ Unimplemented) ListMoneybirdImportProblems(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListMoneybirdImportProblemsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ForgetMoneybirdImportToken Forget the kept Moneybird token
+// (DELETE /api/v2/{administration_id}/moneybird_import/token)
+func (_ Unimplemented) ForgetMoneybirdImportToken(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -37400,6 +37412,32 @@ func (siw *ServerInterfaceWrapper) ListMoneybirdImportProblems(w http.ResponseWr
 	handler.ServeHTTP(w, r)
 }
 
+// ForgetMoneybirdImportToken operation middleware
+func (siw *ServerInterfaceWrapper) ForgetMoneybirdImportToken(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ForgetMoneybirdImportToken(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // TryMoneybirdImportNow operation middleware
 func (siw *ServerInterfaceWrapper) TryMoneybirdImportNow(w http.ResponseWriter, r *http.Request) {
 
@@ -45712,6 +45750,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/v2/{administration_id}/moneybird_import/try_now", wrapper.TryMoneybirdImportNow)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/moneybird_import/token", wrapper.ForgetMoneybirdImportToken)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/v2/{administration_id}/moneybird_import/administrations", wrapper.ListMoneybirdAdministrations)
